@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load bookmark_tags %}
 {% block content %}
 
 <div class='search-bar'>
@@ -20,10 +21,10 @@
 </div>
 
 <div class="tabs">
-   <a href="{% url "tweets:all_tweets" %}" class="{% if request.reslover_match.url_name == 'all_tweets' %}active{% endif %}">
+   <a href="{% url "tweets:all_tweets" %}" class="{% if request.resolver_match.url_name == 'all_tweets' %}active{% endif %}">
         Tweets
    </a>
-   <a href="{% url "tweets:sub_tweets" %}" class="{% if request.reslover_match.url_name == 'sub_tweets' %}active{% endif %}">
+   <a href="{% url "tweets:sub_tweets" %}" class="{% if request.resolver_match.url_name == 'sub_tweets' %}active{% endif %}">
         Subscriptions
    </a>
 </div>
@@ -60,7 +61,7 @@
 
                         <div class="tweet-actions">
                             <a href="{% url 'tweets:toggle_bookmark' tweet.id %}" class="btn">
-                                {% if tweet.is_bookmarked %}
+                                {% if tweet|is_bookmarked:user %}
                                     📕 Delete from Bookmarks
                                 {% else %}
                                     📘 Add to Bookmarks
