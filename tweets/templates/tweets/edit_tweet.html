@@ -6,6 +6,6 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-success">Save Changes</button>
-    <a href="{% url 'tweet_list' %}" class="btn btn-warning">Cancel</a>
+    <a href="{% url 'tweets:all_tweets' %}" class="btn btn-warning">Cancel</a>
 </form>
 {% endblock %}
