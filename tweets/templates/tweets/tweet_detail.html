@@ -11,7 +11,7 @@
 {% endif %}
 
 <p> Likes: {{ tweet.total_likes }} </p>
-<form method="post" action="{% url "like_tweet" tweet.id %}">
+<form method="post" action="{% url "tweets:like_tweet" tweet.id %}">
     {% csrf_token %}
     <button type='submit'>
         {% if user in tweet.likes.all %}
