@@ -8,7 +8,9 @@
                 <li class="tweet-card">
                     <div class="tweet-header">
                         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
-                            <img src="{{ tweet.user.avatar.url }}" alt="Аватар" class='avatar'>
+                            {% if tweet.user.avatar %}
+                                <img src="{{ tweet.user.avatar.url }}" alt="Avatar" class="avatar">
+                            {% endif %}
                             <span>{{ tweet.user.username }}</span>
                         </a>
                         <span class="tweet-date">{{ tweet.created_at }}</span>
@@ -21,7 +23,7 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p>There is no bookmarks.</p>
+        <p>There are no bookmarks.</p>
     {% endif %}
 </div>
 {% endblock %}
