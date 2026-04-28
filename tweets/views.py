@@ -87,12 +87,12 @@ def tweet_detail(request, slug):
 def edit_tweet(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     if request.user != tweet.user:
-        return redirect('tweets:tweet_list')
+        return redirect('tweets:all_tweets')
     if request.method == 'POST':
         form = TweetForm(request.POST, request.FILES, instance=tweet)
         if form.is_valid():
             form.save()
-            return redirect('tweets:tweet_list')
+            return redirect('tweets:all_tweets')
     else:
         form = TweetForm(instance=tweet)
     return render(request, 'tweets/edit_tweet.html' , {'form': form})
@@ -102,7 +102,7 @@ def delete_tweet(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     if request.user == tweet.user:
         tweet.delete()
-    return redirect('tweets:tweet_list')
+    return redirect('tweets:all_tweets')
 
 @login_required
 def like_tweet(request, tweet_id):
@@ -111,7 +111,7 @@ def like_tweet(request, tweet_id):
         tweet.likes.remove(request.user)
     else:
         tweet.likes.add(request.user)
-    return redirect('tweets:tweet_list')
+    return redirect('tweets:all_tweets')
 
 @login_required 
 def add_comment(request, tweet_id):
@@ -123,8 +123,8 @@ def add_comment(request, tweet_id):
             comment.user = request.user
             comment.tweet = tweet 
             comment.save()
-            return redirect('tweets:tweet_list')
-    return redirect('tweets:tweet_list')
+            return redirect('tweets:all_tweets')
+    return redirect('tweets:all_tweets')
 
 
 class TweetListCreateAPIView(APIView):
