@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render , get_object_or_404 , redirect
+from django.views.decorators.http import require_POST
 from .models import Tweet
 from .forms import TweetForm , CommentForm
 from django.db.models import Q
@@ -7,6 +8,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .serializers import TweetSerializer
 
 
@@ -18,7 +20,6 @@ def all_tweets(request):
     else:
         tweets = Tweet.objects.all().order_by('-created_at')
 
-    tweets = Tweet.objects.all().order_by('-created_at')
     form = TweetForm()
     if request.method == 'POST' and request.user.is_authenticated:
         form = TweetForm(request.POST , request.FILES)
@@ -33,6 +34,7 @@ def all_tweets(request):
         'query': query
     })
 
+@login_required
 def sub_tweets(request):
     tweets = Tweet.objects.filter(
         Q(user__in=request.user.following.all())
@@ -40,6 +42,7 @@ def sub_tweets(request):
     return render(request, 'tweets/tweet_list.html', {'tweets':tweets})
 
 @login_required
+@require_POST
 def toggle_bookmark(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     if tweet.is_bookmarked_by(request.user):
@@ -52,11 +55,6 @@ def toggle_bookmark(request, tweet_id):
 def bookmarks_list(request):
     bookmarks = request.user.bookmarked_tweets.all().order_by('-created_at')
     return render(request, 'tweets/bookmarks_list.html', {'bookmarks': bookmarks})
-
-def is_bookmarked_by(self, user):
-    return self.bookmarks.filter(id=user.id).exists()
-
-    
 
 @login_required
 def tweet_detail(request, slug):
@@ -98,6 +96,7 @@ def edit_tweet(request, tweet_id):
     return render(request, 'tweets/edit_tweet.html' , {'form': form})
 
 @login_required
+@require_POST
 def delete_tweet(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     if request.user == tweet.user:
@@ -105,6 +104,7 @@ def delete_tweet(request, tweet_id):
     return redirect('tweets:all_tweets')
 
 @login_required
+@require_POST
 def like_tweet(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     if request.user in tweet.likes.all():
@@ -128,6 +128,8 @@ def add_comment(request, tweet_id):
 
 
 class TweetListCreateAPIView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
         tweets = Tweet.objects.all()
         serializer = TweetSerializer(tweets , many=True)
