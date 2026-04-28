@@ -13,6 +13,7 @@ class TweetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tweet
         fields = '__all__'
+        read_only_fields = ('user', 'slug', 'created_at', 'likes', 'bookmarks')
 
     def get_comments(self, obj):
         comments = obj.comments.all()
