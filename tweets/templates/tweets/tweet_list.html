@@ -2,13 +2,12 @@
 {% load bookmark_tags %}
 {% block content %}
 
-<div class='search-bar'>
-    <form method="get" action="{% url "tweets:all_tweets" %}">
+<div class="search-bar">
+    <form method="get" action="{% url 'tweets:all_tweets' %}">
         <input type="text" name="q" value="{{ query }}" placeholder="Searching tweets" class="search-input">
         <button type="submit" class="search-btn">Search</button>
     </form>
 </div>
-
 
 <div class="tweet-form">
     {% if user.is_authenticated %}
@@ -21,10 +20,10 @@
 </div>
 
 <div class="tabs">
-   <a href="{% url "tweets:all_tweets" %}" class="{% if request.resolver_match.url_name == 'all_tweets' %}active{% endif %}">
+   <a href="{% url 'tweets:all_tweets' %}" class="{% if request.resolver_match.url_name == 'all_tweets' %}active{% endif %}">
         Tweets
    </a>
-   <a href="{% url "tweets:sub_tweets" %}" class="{% if request.resolver_match.url_name == 'sub_tweets' %}active{% endif %}">
+   <a href="{% url 'tweets:sub_tweets' %}" class="{% if request.resolver_match.url_name == 'sub_tweets' %}active{% endif %}">
         Subscriptions
    </a>
 </div>
@@ -36,49 +35,54 @@
                 <li class="tweet-card">
                     <div class="tweet-header">
                         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
-                            <img src="{{ tweet.user.avatar.url }}" alt="Аватар" class='avatar'>
+                            {% if tweet.user.avatar %}
+                                <img src="{{ tweet.user.avatar.url }}" alt="Avatar" class="avatar">
+                            {% endif %}
                             <span>{{ tweet.user.username }}</span>
                         </a>
                         <span class="tweet-date">{{ tweet.created_at }}</span>
                     </div>
+
                     <p class="tweet-content">
                         <a href="{% url 'tweets:tweet_detail' tweet.slug %}">
                             {{ tweet.content }}
                         </a>
                     </p>
+
                     {% if tweet.media %}
                         <img src="{{ tweet.media.url }}" alt="Tweet Media" class="tweet-media">
                     {% endif %}
-                    <div class="tweet-actions">
-                        <a href="{% url 'tweets:like_tweet' tweet.id %}" class="btn">
-                            {% if tweet|is_bookmarked:user %}
-                                📕 Убрать из закладок
-                            {% else %}
-                                📘 Добавить в закладки
-                            {% endif %}
-                        </a>
-                        <span>{{ tweet.total_likes }} Likes</span>
 
-                        <div class="tweet-actions">
-                            <a href="{% url 'tweets:toggle_bookmark' tweet.id %}" class="btn">
+                    <div class="tweet-actions">
+                        <form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn">{{ tweet.total_likes }} Likes</button>
+                        </form>
+
+                        <form method="post" action="{% url 'tweets:toggle_bookmark' tweet.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn">
                                 {% if tweet|is_bookmarked:user %}
-                                    📕 Delete from Bookmarks
+                                    Remove Bookmark
                                 {% else %}
-                                    📘 Add to Bookmarks
+                                    Add Bookmark
                                 {% endif %}
-                            </a>                            
-                        </div>
+                            </button>
+                        </form>
 
                         {% if tweet.user == user %}
-                            <a href="" class="btn">✏️ Edit</a>
-                            <a href="" class="btn text-danger">🗑️ Delete</a>
+                            <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
+                            <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn text-danger">Delete</button>
+                            </form>
                         {% endif %}
                     </div>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>There is now Tweets.</p>
+        <p>There are no tweets.</p>
     {% endif %}
 </div>
 {% endblock %}
