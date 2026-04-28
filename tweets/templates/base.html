@@ -11,7 +11,7 @@
     <div class="container">
         <div class="sidebar-container">
             <div class="sidebar">
-                <a href="#" class="menu-item">
+                <a href="{% url 'tweets:all_tweets' %}" class="menu-item">
                     <span class="icon">🏠</span> Main
                 </a>
                 <a href="#" class="menu-item">
@@ -32,12 +32,16 @@
                         <span class="icon">👤</span> Login
                     </a>
                 {% endif %}
-                <div class="profile-section">
-                    <img src="{{ user.avatar.url }}" alt="Avatar" class="profile-avatar">
-                    <div class="profile-info">
-                        <span class="profile-username">{{ user.username }}</span>
+                {% if user.is_authenticated %}
+                    <div class="profile-section">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="Avatar" class="profile-avatar">
+                        {% endif %}
+                        <div class="profile-info">
+                            <span class="profile-username">{{ user.username }}</span>
+                        </div>
                     </div>
-                </div>
+                {% endif %}
             </div>
         </div>
 
