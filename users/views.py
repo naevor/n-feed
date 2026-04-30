@@ -1,15 +1,17 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from .forms import RegisterForm, LoginForm, EditProfileForm
-from .models import CustomUser
-from tweets.models import Tweet
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
-
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from tweets.selectors import user_tweets_qs
+from .forms import EditProfileForm, LoginForm, RegisterForm
 from .models import CustomUser
+from .selectors import get_user_by_username
 from .serializers import UserSerializer
+from . import services
 
 
 def register_view(request):
@@ -23,6 +25,7 @@ def register_view(request):
         form = RegisterForm()
     return render(request, 'users/register.html', {'form': form})
 
+
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(data=request.POST)
@@ -34,63 +37,67 @@ def login_view(request):
         form = LoginForm()
     return render(request, 'users/login.html', {'form': form})
 
+
 @login_required
 def profile_view(request, username):
-    user = get_object_or_404(CustomUser, username=username)
-    user_tweets = Tweet.objects.filter(user=user).order_by('-created_at')
-    
+    user = get_user_by_username(username=username)
+    tweets = user_tweets_qs(author=user)
     mutual_followers = user.followers.filter(id__in=request.user.following.all())
-    
-    return render(
-        request, 'users/profile.html', {
-            'user': user,
-            'tweets': user_tweets,
-            'mutual_followers': mutual_followers
-        }
-    )
+    return render(request, 'users/profile.html', {
+        'user': user,
+        'tweets': tweets,
+        'mutual_followers': mutual_followers,
+    })
+
 
 @login_required
 def edit_profile_view(request):
     if request.method == 'POST':
         form = EditProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            form.save()
+            services.update_profile(user=request.user, form=form)
             return redirect('users:profile', username=request.user.username)
     else:
         form = EditProfileForm(instance=request.user)
     return render(request, 'users/edit_profile.html', {'form': form})
+
 
 @login_required
 def logout_view(request):
     logout(request)
     return redirect('tweets:all_tweets')
 
+
 @login_required
+@require_POST
 def follow_user_view(request, username):
-    user_to_follow = get_object_or_404(CustomUser, username=username)
-    if request.user != user_to_follow:
-        if user_to_follow in request.user.following.all():
-            request.user.following.remove(user_to_follow)
-        else:
-            request.user.following.add(user_to_follow)
+    target = get_user_by_username(username=username)
+    services.follow_toggle(actor=request.user, target=target)
     return redirect('users:profile', username=username)
+
 
 @login_required
 def followers_list_view(request, username):
-    user = get_object_or_404(CustomUser, username=username)
-    followers = user.followers.all()
-    return render(request, 'users/followers_list.html', {'user': user, 'followers': followers})
+    user = get_user_by_username(username=username)
+    return render(request, 'users/followers_list.html', {
+        'user': user,
+        'followers': user.followers.all(),
+    })
+
 
 @login_required
 def following_list_view(request, username):
-    user = get_object_or_404(CustomUser, username=username)
-    following = user.following.all()
-    return render(request, 'users/following_list.html', {'user': user, 'following': following})
+    user = get_user_by_username(username=username)
+    return render(request, 'users/following_list.html', {
+        'user': user,
+        'following': user.following.all(),
+    })
+
 
 @login_required
 def delete_account_view(request):
     if request.method == 'POST':
-        request.user.delete()
+        services.delete_account(user=request.user)
         return redirect('tweets:all_tweets')
     return render(request, 'users/delete_account.html')
 
