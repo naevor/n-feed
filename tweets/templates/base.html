@@ -36,6 +36,8 @@
                     <div class="profile-section">
                         {% if user.avatar %}
                             <img src="{{ user.avatar.url }}" alt="Avatar" class="profile-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar" class="profile-avatar">
                         {% endif %}
                         <div class="profile-info">
                             <span class="profile-username">{{ user.username }}</span>

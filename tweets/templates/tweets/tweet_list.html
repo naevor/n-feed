@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load bookmark_tags %}
+{% load bookmark_tags static %}
 {% block content %}
 
 <div class="search-bar">
@@ -37,6 +37,8 @@
                         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
                             {% if tweet.user.avatar %}
                                 <img src="{{ tweet.user.avatar.url }}" alt="Avatar" class="avatar">
+                            {% else %}
+                                <img src="{% static 'img/default-avatar.png' %}" alt="Avatar" class="avatar">
                             {% endif %}
                             <span>{{ tweet.user.username }}</span>
                         </a>
