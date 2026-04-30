@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content  %}
+{% block content %}
 
 <h2>{{ tweet.user.username }}</h2>
 <p>{{ tweet.content }}</p>
@@ -10,15 +10,11 @@
     <img src="{{ tweet.media.url }}" alt="Tweet Media">
 {% endif %}
 
-<p> Likes: {{ tweet.total_likes }} </p>
-<form method="post" action="{% url "tweets:like_tweet" tweet.id %}">
+<p>Likes: {{ tweet.likes_count }}</p>
+<form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
     {% csrf_token %}
-    <button type='submit'>
-        {% if user in tweet.likes.all %}
-            Remove Like
-        {% else %}
-            Like
-        {% endif %}
+    <button type="submit">
+        {% if tweet.is_liked %}Remove Like{% else %}Like{% endif %}
     </button>
 </form>
 
@@ -27,16 +23,16 @@
     {% for comment in comments %}
         <li>
             <strong>{{ comment.user.username }}</strong>: {{ comment.content }}
-            <p> {{ comment.created_at }} </p>
+            <p>{{ comment.created_at }}</p>
         </li>
     {% endfor %}
 </ul>
 
-<H4> Add Comment: </H4>
+<h4>Add Comment:</h4>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type='submit'> Comment </button>
+    <button type="submit">Comment</button>
 </form>
 
-{% endblock  %}
+{% endblock %}

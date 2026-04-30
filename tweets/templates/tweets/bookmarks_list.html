@@ -3,9 +3,9 @@
 {% block content %}
 <h1>Bookmarks</h1>
 <div class="tweets">
-    {% if bookmarks %}
+    {% if page.object_list %}
         <ul class="tweet-list">
-            {% for tweet in bookmarks %}
+            {% for tweet in page %}
                 <li class="tweet-card">
                     <div class="tweet-header">
                         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
@@ -25,6 +25,18 @@
                 </li>
             {% endfor %}
         </ul>
+
+        {% if page.has_previous or page.has_next %}
+            <div class="pagination">
+                {% if page.has_previous %}
+                    <a href="?page={{ page.previous_page_number }}" class="btn">Previous</a>
+                {% endif %}
+                <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+                {% if page.has_next %}
+                    <a href="?page={{ page.next_page_number }}" class="btn">Next</a>
+                {% endif %}
+            </div>
+        {% endif %}
     {% else %}
         <p>There are no bookmarks.</p>
     {% endif %}

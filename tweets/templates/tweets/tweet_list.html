@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load bookmark_tags static %}
+{% load static %}
 {% block content %}
 
 <div class="search-bar">
@@ -29,9 +29,9 @@
 </div>
 
 <div class="tweets">
-    {% if tweets %}
+    {% if page.object_list %}
         <ul class="tweet-list">
-            {% for tweet in tweets %}
+            {% for tweet in page %}
                 <li class="tweet-card">
                     <div class="tweet-header">
                         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
@@ -58,17 +58,15 @@
                     <div class="tweet-actions">
                         <form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
                             {% csrf_token %}
-                            <button type="submit" class="btn">{{ tweet.total_likes }} Likes</button>
+                            <button type="submit" class="btn">
+                                {{ tweet.likes_count }} {% if tweet.is_liked %}Unlike{% else %}Like{% endif %}
+                            </button>
                         </form>
 
                         <form method="post" action="{% url 'tweets:toggle_bookmark' tweet.id %}">
                             {% csrf_token %}
                             <button type="submit" class="btn">
-                                {% if tweet|is_bookmarked:user %}
-                                    Remove Bookmark
-                                {% else %}
-                                    Add Bookmark
-                                {% endif %}
+                                {% if tweet.is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}
                             </button>
                         </form>
 
@@ -83,6 +81,18 @@
                 </li>
             {% endfor %}
         </ul>
+
+        {% if page.has_previous or page.has_next %}
+            <div class="pagination">
+                {% if page.has_previous %}
+                    <a href="?page={{ page.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn">Previous</a>
+                {% endif %}
+                <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+                {% if page.has_next %}
+                    <a href="?page={{ page.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn">Next</a>
+                {% endif %}
+            </div>
+        {% endif %}
     {% else %}
         <p>There are no tweets.</p>
     {% endif %}
