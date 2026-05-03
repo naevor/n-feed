@@ -1,38 +1,38 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Profile of {{ user.username }}{% endblock %}
+{% block title %}Profile of {{ profile_user.username }}{% endblock %}
 
 {% block content %}
 <div class="profile-container">
-    <h1>Profile of {{ user.username }}</h1>
+    <h1>Profile of {{ profile_user.username }}</h1>
     <div class="profile-details">
         <div class="profile-avatar-section">
-            {% if user.avatar %}
-                <img src="{{ user.avatar.url }}" alt="Аватар" class="profile-avatar">
+            {% if profile_user.avatar %}
+                <img src="{{ profile_user.avatar.url }}" alt="Avatar" class="profile-avatar">
             {% else %}
-                <img src="{% static 'img/default-avatar.png' %}" alt="Аватар" class="profile-avatar">
+                <img src="{% static 'img/default-avatar.png' %}" alt="Avatar" class="profile-avatar">
             {% endif %}
         </div>
         <div class="profile-info-section">
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>About me:</strong> {{ user.bio }}</p>
-            <p><a href="{% url 'users:followers_list' user.username %}">Followers:</a> {{ user.followers.count }}</p>
-            <p><a href="{% url 'users:following_list' user.username %}">Following:</a> {{ user.following.count }}</p>
+            <p><strong>Email:</strong> {{ profile_user.email }}</p>
+            <p><strong>About me:</strong> {{ profile_user.bio }}</p>
+            <p><a href="{% url 'users:followers_list' profile_user.username %}">Followers:</a> {{ profile_user.followers.count }}</p>
+            <p><a href="{% url 'users:following_list' profile_user.username %}">Following:</a> {{ profile_user.following.count }}</p>
         </div>
     </div>
 
-    {% if user == request.user %}
+    {% if profile_user == request.user %}
     <div class="profile-actions">
         <a href="{% url 'users:edit_profile' %}" class="btn">Edit Profile</a>
         <a href="{% url 'users:logout' %}" class="btn btn-danger">Exit</a>
     </div>
     {% else %}
     <div class="profile-follow">
-        <form method="post" action="{% url 'users:follow' user.username %}">
+        <form method="post" action="{% url 'users:follow' profile_user.username %}">
             {% csrf_token %}
             <button type="submit" class="btn">
-                {% if request.user in user.followers.all %}
+                {% if request.user in profile_user.followers.all %}
                     Unfollow
                 {% else %}
                     Follow
@@ -42,21 +42,36 @@
     </div>
     {% endif %}
 
-    <h3>Твиты {{ user.username }}</h3>
+    <h3>Tweets {{ profile_user.username }}</h3>
     {% if tweets %}
         <ul class="tweet-list">
             {% for tweet in tweets %}
                 <li class="tweet-card">
-                    <p>{{ tweet.content }}</p>
+                    <p>
+                        <a href="{% url 'tweets:tweet_detail' tweet.slug %}">
+                            {{ tweet.content }}
+                        </a>
+                    </p>
                     <p><small>{{ tweet.created_at }}</small></p>
                     {% if tweet.media %}
                         <img src="{{ tweet.media.url }}" alt="Tweet Media" class="tweet-media">
+                    {% endif %}
+
+                    {% if tweet.user == request.user %}
+                        <div class="tweet-actions">
+                            <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
+                            <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn text-danger">Delete</button>
+                            </form>
+                        </div>
                     {% endif %}
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>{{ user.username }} hasn't tweet anything.</p>
+        <p>{{ profile_user.username }} hasn't tweeted anything.</p>
     {% endif %}
 </div>
 {% endblock %}

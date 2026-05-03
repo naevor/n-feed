@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Followers of {{ user.username }}{% endblock %}
+{% block title %}Followers of {{ profile_user.username }}{% endblock %}
 
 {% block content %}
-<h1>Followers {{ user.username }}</h1>
+<h1>Followers {{ profile_user.username }}</h1>
 <ul class="follower-list">
     {% for follower in followers %}
         <li>
@@ -11,5 +11,5 @@
         </li>
     {% endfor %}
 </ul>
-<a href="{% url 'users:profile' user.username %}" class="btn-flwr">Back to profile</a>
+<a href="{% url 'users:profile' profile_user.username %}" class="btn-flwr">Back to profile</a>
 {% endblock %}

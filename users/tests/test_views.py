@@ -19,6 +19,12 @@ class UserViewTests(TestCase):
         response = self.client.get(reverse('users:profile', args=['alice']))
         self.assertEqual(response.status_code, 200)
 
+    def test_sidebar_profile_link_points_to_authenticated_user(self):
+        self.client.login(username='alice', password='testpass123')
+        response = self.client.get(reverse('users:profile', args=['bob']))
+        self.assertContains(response, reverse('users:profile', args=['alice']))
+        self.assertContains(response, 'Profile of bob')
+
     def test_follow_toggle_adds_following(self):
         self.client.login(username='alice', password='testpass123')
         self.client.post(reverse('users:follow', args=['bob']))
