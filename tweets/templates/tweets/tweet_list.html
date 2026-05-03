@@ -58,6 +58,7 @@
                     <div class="tweet-actions">
                         <form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
                             {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
                             <button type="submit" class="btn">
                                 {{ tweet.likes_count }} {% if tweet.is_liked %}Unlike{% else %}Like{% endif %}
                             </button>
@@ -65,6 +66,7 @@
 
                         <form method="post" action="{% url 'tweets:toggle_bookmark' tweet.id %}">
                             {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
                             <button type="submit" class="btn">
                                 {% if tweet.is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}
                             </button>
@@ -74,6 +76,7 @@
                             <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
                             <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                                 {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                 <button type="submit" class="btn text-danger">Delete</button>
                             </form>
                         {% endif %}

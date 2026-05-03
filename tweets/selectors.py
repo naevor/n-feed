@@ -40,8 +40,8 @@ def subscriptions_feed_qs(*, user):
     )
 
 
-def user_tweets_qs(*, author):
-    return _base_tweet_qs().filter(user=author).order_by('-created_at', '-id')
+def user_tweets_qs(*, author, viewer=None):
+    return _base_tweet_qs(viewer).filter(user=author).order_by('-created_at', '-id')
 
 
 def bookmarks_qs(*, user):

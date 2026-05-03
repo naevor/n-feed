@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from rest_framework import status
@@ -15,6 +16,17 @@ from .serializers import TweetSerializer
 from . import services
 
 PAGE_SIZE = 20
+
+
+def _redirect_after_action(request):
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
+    return redirect('tweets:all_tweets')
 
 
 def all_tweets(request):
@@ -40,7 +52,11 @@ def all_tweets(request):
 def sub_tweets(request):
     qs = subscriptions_feed_qs(user=request.user)
     page = Paginator(qs, PAGE_SIZE).get_page(request.GET.get('page'))
-    return render(request, 'tweets/tweet_list.html', {'page': page})
+    return render(request, 'tweets/tweet_list.html', {
+        'page': page,
+        'form': TweetForm(),
+        'query': '',
+    })
 
 
 @login_required
@@ -48,7 +64,7 @@ def sub_tweets(request):
 def toggle_bookmark(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     services.toggle_bookmark(user=request.user, tweet=tweet)
-    return redirect('tweets:all_tweets')
+    return _redirect_after_action(request)
 
 
 @login_required
@@ -100,7 +116,7 @@ def delete_tweet(request, tweet_id):
         services.delete_tweet_by_user(user=request.user, tweet=tweet)
     except PermissionError:
         pass
-    return redirect('tweets:all_tweets')
+    return _redirect_after_action(request)
 
 
 @login_required
@@ -108,7 +124,7 @@ def delete_tweet(request, tweet_id):
 def like_tweet(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     services.toggle_like(user=request.user, tweet=tweet)
-    return redirect('tweets:all_tweets')
+    return _redirect_after_action(request)
 
 
 @login_required

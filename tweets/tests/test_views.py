@@ -48,3 +48,27 @@ class TweetViewTests(TestCase):
         self.client.login(username='author', password='testpass123')
         response = self.client.get(reverse('tweets:toggle_bookmark', args=[self.tweet.id]))
         self.assertEqual(response.status_code, 405)
+
+    def test_like_redirects_back_to_next_url(self):
+        self.client.login(username='author', password='testpass123')
+        next_url = reverse('users:profile', args=['author'])
+        response = self.client.post(
+            reverse('tweets:like_tweet', args=[self.tweet.id]),
+            {'next': next_url},
+        )
+        self.assertRedirects(response, next_url)
+
+    def test_bookmark_redirects_back_to_next_url(self):
+        self.client.login(username='author', password='testpass123')
+        next_url = reverse('users:profile', args=['author'])
+        response = self.client.post(
+            reverse('tweets:toggle_bookmark', args=[self.tweet.id]),
+            {'next': next_url},
+        )
+        self.assertRedirects(response, next_url)
+
+    def test_subscriptions_page_renders_tweet_form(self):
+        self.client.login(username='author', password='testpass123')
+        response = self.client.get(reverse('tweets:sub_tweets'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
