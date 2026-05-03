@@ -31,11 +31,8 @@ class TweetViewTests(TestCase):
         self.assertTrue(Tweet.objects.filter(id=self.tweet.id).exists())
 
     def test_anonymous_api_post_is_denied(self):
-        response = self.client.post(
-            reverse('tweets:tweet-list-create'),
-            {'content': 'anonymous api post'},
-        )
-        self.assertEqual(response.status_code, 403)
+        response = self.client.post('/api/v1/tweets/', {'content': 'anonymous api post'})
+        self.assertEqual(response.status_code, 401)
         self.assertFalse(Tweet.objects.filter(content='anonymous api post').exists())
 
     def test_feed_uses_likes_count_annotation(self):
