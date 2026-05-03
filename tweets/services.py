@@ -1,17 +1,29 @@
-from .models import Tweet, Comment
+from .models import Comment, Tweet
 
 
-def create_tweet(*, user, form):
-    tweet = form.save(commit=False)
-    tweet.user = user
-    tweet.save()
-    return tweet
+def create_tweet(*, user, form=None, content=None, media=None):
+    if form is not None:
+        tweet = form.save(commit=False)
+        tweet.user = user
+        tweet.save()
+        return tweet
+
+    if content is None:
+        raise ValueError("content is required")
+    return Tweet.objects.create(user=user, content=content, media=media)
 
 
-def update_tweet(*, user, tweet, form):
+def update_tweet(*, user, tweet, form=None, **fields):
     if tweet.user_id != user.id:
         raise PermissionError("not the owner")
-    return form.save()
+    if form is not None:
+        return form.save()
+
+    for field in ('content', 'media'):
+        if field in fields:
+            setattr(tweet, field, fields[field])
+    tweet.save()
+    return tweet
 
 
 def delete_tweet_by_user(*, user, tweet):

@@ -3,14 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 from tweets.selectors import user_tweets_qs
 from .forms import EditProfileForm, LoginForm, RegisterForm
-from .models import CustomUser
 from .selectors import get_user_by_username
-from .serializers import UserSerializer
 from . import services
 
 
@@ -100,10 +95,3 @@ def delete_account_view(request):
         services.delete_account(user=request.user)
         return redirect('tweets:all_tweets')
     return render(request, 'users/delete_account.html')
-
-
-class UserListAPIView(APIView):
-    def get(self, request):
-        users = CustomUser.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)

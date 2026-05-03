@@ -4,15 +4,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 from .forms import CommentForm, TweetForm
 from .models import Tweet
 from .selectors import bookmarks_qs, feed_qs, subscriptions_feed_qs, tweet_with_comments
-from .serializers import TweetSerializer
 from . import services
 
 PAGE_SIZE = 20
@@ -135,19 +129,3 @@ def add_comment(request, tweet_id):
         if form.is_valid():
             services.add_comment(user=request.user, tweet=tweet, form=form)
     return redirect('tweets:all_tweets')
-
-
-class TweetListCreateAPIView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def get(self, request):
-        tweets = feed_qs(user=request.user)
-        serializer = TweetSerializer(tweets, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = TweetSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

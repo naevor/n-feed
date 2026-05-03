@@ -9,7 +9,10 @@ def _base_tweet_qs(user=None):
     qs = (
         Tweet.objects
         .select_related('user')
-        .annotate(likes_count=Count('likes', distinct=True))
+        .annotate(
+            likes_count=Count('likes', distinct=True),
+            comments_count=Count('comments', distinct=True),
+        )
     )
     if user is not None and user.is_authenticated:
         User = get_user_model()
