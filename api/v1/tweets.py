@@ -13,7 +13,7 @@ from tweets.serializers import TweetCreateSerializer, TweetSerializer
 class TweetViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filterset_fields = ['user__username']
+    filterset_fields = ['user__username', 'tags__name']
     search_fields = ['content']
     ordering_fields = ['created_at']
 
