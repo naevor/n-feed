@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     'api',
+    'tags',
     'tweets',
     'users',
 ]
