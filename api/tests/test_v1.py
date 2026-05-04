@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -131,3 +132,18 @@ class ApiV1Tests(APITestCase):
         self.assertEqual(ordering_response.status_code, status.HTTP_200_OK)
         self.assertEqual(search_response.data['count'], 1)
         self.assertEqual(filter_response.data['count'], 1)
+
+    def test_tweet_tag_filter_and_trending_endpoint(self):
+        cache.clear()
+        Tweet.objects.create(user=self.user, content='first #Django')
+        Tweet.objects.create(user=self.other, content='second #django')
+        Tweet.objects.create(user=self.other, content='other #python')
+
+        filter_response = self.client.get('/api/v1/tweets/?tags__name=django')
+        trending_response = self.client.get('/api/v1/tags/trending/')
+
+        self.assertEqual(filter_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(trending_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(filter_response.data['count'], 2)
+        self.assertEqual(trending_response.data[0]['name'], 'django')
+        self.assertEqual(trending_response.data[0]['tweet_count'], 2)
