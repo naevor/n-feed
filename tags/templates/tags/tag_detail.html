@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load tweet_formatting %}
+
+{% block title %}#{{ tag_name }}{% endblock %}
+
 {% block content %}
-<h1>Bookmarks</h1>
+<h1>#{{ tag_name }}</h1>
+
 <div class="tweets">
     {% if page.object_list %}
         <ul class="tweet-list">
@@ -19,10 +23,15 @@
                         </a>
                         <span class="tweet-date">{{ tweet.created_at }}</span>
                     </div>
-                    <p class="tweet-content">{{ tweet.content|format_tweet }}</p>
+
+                    <p class="tweet-content">
+                        {{ tweet.content|format_tweet }}
+                    </p>
+
                     {% if tweet.media %}
                         <img src="{{ tweet.media.url }}" alt="Tweet Media" class="tweet-media">
                     {% endif %}
+
                     <div class="tweet-actions">
                         <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
                     </div>
@@ -42,7 +51,7 @@
             </div>
         {% endif %}
     {% else %}
-        <p>There are no bookmarks.</p>
+        <p>There are no tweets for this tag.</p>
     {% endif %}
 </div>
 {% endblock %}

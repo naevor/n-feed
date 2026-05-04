@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load tweet_formatting %}
 
 {% block title %}Profile of {{ profile_user.username }}{% endblock %}
 
@@ -48,9 +49,7 @@
             {% for tweet in tweets %}
                 <li class="tweet-card">
                     <p>
-                        <a href="{% url 'tweets:tweet_detail' tweet.slug %}">
-                            {{ tweet.content }}
-                        </a>
+                        {{ tweet.content|format_tweet }}
                     </p>
                     <p><small>{{ tweet.created_at }}</small></p>
                     {% if tweet.media %}
@@ -59,12 +58,17 @@
 
                     {% if tweet.user == request.user %}
                         <div class="tweet-actions">
+                            <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
                             <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
                             <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                 <button type="submit" class="btn text-danger">Delete</button>
                             </form>
+                        </div>
+                    {% else %}
+                        <div class="tweet-actions">
+                            <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
                         </div>
                     {% endif %}
                 </li>

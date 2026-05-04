@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load tweet_formatting %}
 
 {% block content %}
 
 <h2>{{ tweet.user.username }}</h2>
-<p>{{ tweet.content }}</p>
+<p>{{ tweet.content|format_tweet }}</p>
 <p>{{ tweet.created_at }}</p>
 
 {% if tweet.media %}
@@ -23,7 +24,7 @@
 <ul>
     {% for comment in comments %}
         <li>
-            <strong>{{ comment.user.username }}</strong>: {{ comment.content }}
+            <strong>{{ comment.user.username }}</strong>: {{ comment.content|format_tweet }}
             <p>{{ comment.created_at }}</p>
         </li>
     {% endfor %}

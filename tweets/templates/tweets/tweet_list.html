@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load tweet_formatting %}
 {% block content %}
 
 <div class="search-bar">
@@ -46,9 +47,7 @@
                     </div>
 
                     <p class="tweet-content">
-                        <a href="{% url 'tweets:tweet_detail' tweet.slug %}">
-                            {{ tweet.content }}
-                        </a>
+                        {{ tweet.content|format_tweet }}
                     </p>
 
                     {% if tweet.media %}
@@ -73,12 +72,16 @@
                         </form>
 
                         {% if tweet.user == user %}
+                            <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
                             <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
                             <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                 <button type="submit" class="btn text-danger">Delete</button>
                             </form>
+                        {% endif %}
+                        {% if tweet.user != user %}
+                            <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
                         {% endif %}
                     </div>
                 </li>
