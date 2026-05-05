@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<h1>Notifications</h1>
+
+{% if page.object_list %}
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="btn">Mark all read</button>
+    </form>
+
+    <ul class="tweet-list">
+        {% for notification in page %}
+            <li class="tweet-card">
+                <p>
+                    <a href="{% url 'users:profile' notification.actor.username %}">
+                        {{ notification.actor.username }}
+                    </a>
+                    {% if notification.kind == 'like' %}
+                        liked your tweet
+                    {% elif notification.kind == 'comment' %}
+                        commented on your tweet
+                    {% elif notification.kind == 'follow' %}
+                        followed you
+                    {% elif notification.kind == 'mention' %}
+                        mentioned you
+                    {% endif %}
+                </p>
+
+                {% if notification.tweet %}
+                    <p>
+                        <a href="{% url 'tweets:tweet_detail' notification.tweet.slug %}">
+                            {{ notification.tweet.content|truncatechars:120 }}
+                        </a>
+                    </p>
+                {% endif %}
+
+                <p><small>{{ notification.created_at }}</small></p>
+
+                {% if not notification.is_read %}
+                    <form method="post" action="{% url 'notifications:mark_read' notification.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" class="btn">Mark read</button>
+                    </form>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    {% if page.has_previous or page.has_next %}
+        <div class="pagination">
+            {% if page.has_previous %}
+                <a href="?page={{ page.previous_page_number }}" class="btn">Previous</a>
+            {% endif %}
+            <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+            {% if page.has_next %}
+                <a href="?page={{ page.next_page_number }}" class="btn">Next</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% else %}
+    <p>There are no notifications.</p>
+{% endif %}
+{% endblock %}

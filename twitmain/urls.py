@@ -8,6 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('tags/', include('tags.urls')),
+    path('notifications/', include('notifications.urls')),
     path('users/', include('users.urls')),
     path('tweets/', include('tweets.urls')), 
     path('', RedirectView.as_view(pattern_name='tweets:all_tweets', permanent=False)),

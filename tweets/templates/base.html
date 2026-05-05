@@ -14,8 +14,11 @@
                 <a href="{% url 'tweets:all_tweets' %}" class="menu-item">
                     <span class="icon">🏠</span> Main
                 </a>
-                <a href="#" class="menu-item">
+                <a href="{% url 'notifications:list' %}" class="menu-item">
                     <span class="icon">🔔</span> Notifications
+                    {% if unread_notifications %}
+                        <span class="badge">{{ unread_notifications }}</span>
+                    {% endif %}
                 </a>
                 <a href="{% url "tweets:bookmarks_list" %}" class="menu-item">
                     <span class="icon">📘</span> Bookmarks
