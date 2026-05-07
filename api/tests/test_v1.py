@@ -11,6 +11,7 @@ User = get_user_model()
 
 class ApiV1Tests(APITestCase):
     def setUp(self):
+        cache.clear()
         self.user = User.objects.create_user(username='author', password='testpass123')
         self.other = User.objects.create_user(username='other', password='testpass123')
         self.tweet = Tweet.objects.create(user=self.user, content='hello api searchable')
@@ -119,6 +120,17 @@ class ApiV1Tests(APITestCase):
         self.assertEqual(follow_response.status_code, status.HTTP_200_OK)
         self.assertTrue(follow_response.data['following'])
         self.assertIn(self.other, self.user.following.all())
+
+    def test_user_suggestions_endpoint_returns_friends_of_friends(self):
+        third = User.objects.create_user(username='third', password='testpass123')
+        self.user.following.add(self.other)
+        self.other.following.add(third)
+        self.authenticate()
+
+        response = self.client.get('/api/v1/users/suggestions/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['username'], 'third')
 
     def test_tweet_search_filter_and_ordering(self):
         Tweet.objects.create(user=self.other, content='another api tweet')
