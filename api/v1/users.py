@@ -2,10 +2,12 @@ from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from users import services
-from users.serializers import UserDetailSerializer
+from users.selectors import suggested_users
+from users.serializers import UserDetailSerializer, UserMinSerializer
 
 User = get_user_model()
 
@@ -31,3 +33,13 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         target = self.get_object()
         result = services.follow_toggle(actor=request.user, target=target)
         return Response({'following': result is True})
+
+    @extend_schema(responses=UserMinSerializer(many=True))
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def suggestions(self, request):
+        serializer = UserMinSerializer(
+            suggested_users(user=request.user),
+            many=True,
+            context=self.get_serializer_context(),
+        )
+        return Response(serializer.data)
