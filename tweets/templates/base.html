@@ -58,19 +58,31 @@
         <aside class="right-panel-container">
             <div class="right-panel">
                 <div class="trends">
-                    <h2></h2>
-                    <ul>
-                        <li></li>
-                        <li></li>
-                        <li></li>
-                    </ul>
+                    {% if trending_tags %}
+                        <h2>Trends</h2>
+                        <ul class="side-list">
+                            {% for tag in trending_tags %}
+                                <li>
+                                    <a href="{% url 'tags:tag_detail' tag.name %}">#{{ tag.name }}</a>
+                                    <span>{{ tag.tweet_count }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                 </div>
                 <div class="who-to-follow">
-                    <h2></h2>
-                    <ul>
-                        <li></li>
-                        <li></li>
-                    </ul>
+                    {% if suggested_users %}
+                        <h2>Who to follow</h2>
+                        <ul class="side-list">
+                            {% for suggested_user in suggested_users %}
+                                <li>
+                                    <a href="{% url 'users:profile' suggested_user.username %}">
+                                        {{ suggested_user.username }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                 </div>
             </div>
         </aside>
