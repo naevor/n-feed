@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 
@@ -7,6 +8,7 @@ User = get_user_model()
 
 class UserViewTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.user = User.objects.create_user(username='alice', password='testpass123')
         self.other = User.objects.create_user(username='bob', password='testpass123')
 
@@ -40,3 +42,14 @@ class UserViewTests(TestCase):
         self.client.login(username='alice', password='testpass123')
         self.client.post(reverse('users:follow', args=['alice']))
         self.assertNotIn(self.user, self.user.following.all())
+
+    def test_sidebar_shows_who_to_follow_suggestions(self):
+        carol = User.objects.create_user(username='carol', password='testpass123')
+        self.user.following.add(self.other)
+        self.other.following.add(carol)
+        self.client.login(username='alice', password='testpass123')
+
+        response = self.client.get(reverse('tweets:all_tweets'))
+
+        self.assertContains(response, 'Who to follow')
+        self.assertContains(response, 'carol')
