@@ -1,0 +1,40 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "twitmain.settings"
+python_files = ["test_*.py", "tests.py"]
+testpaths = [
+    "api",
+    "notifications",
+    "tags",
+    "tweets",
+    "users",
+]
+addopts = "--reuse-db --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=70"
+
+[tool.coverage.run]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "manage.py",
+    "twitmain/asgi.py",
+    "twitmain/wsgi.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".venv",
+    "migrations",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "DJ"]
+ignore = ["E501", "DJ001"]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*.py" = ["DJ001"]

@@ -28,7 +28,9 @@ staticfiles/
 
 # Tooling
 .pytest_cache/
+.ruff_cache/
 .coverage
+coverage.xml
 htmlcov/
 
 # IDE/OS
@@ -37,4 +39,4 @@ htmlcov/
 .DS_Store
 Thumbs.db
 # testing claude to review my project and planning
-.claude 
+.claude
