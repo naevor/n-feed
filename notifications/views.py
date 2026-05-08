@@ -12,21 +12,21 @@ PAGE_SIZE = 20
 
 
 def _redirect_after_action(request):
-    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER")
     if next_url and url_has_allowed_host_and_scheme(
         next_url,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
     ):
         return redirect(next_url)
-    return redirect('notifications:list')
+    return redirect("notifications:list")
 
 
 @login_required
 def notification_list(request):
     qs = user_notifications_qs(user=request.user)
-    page = Paginator(qs, PAGE_SIZE).get_page(request.GET.get('page'))
-    return render(request, 'notifications/list.html', {'page': page})
+    page = Paginator(qs, PAGE_SIZE).get_page(request.GET.get("page"))
+    return render(request, "notifications/list.html", {"page": page})
 
 
 @login_required

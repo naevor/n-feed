@@ -11,22 +11,22 @@ User = get_user_model()
 class TagViewTests(TestCase):
     def setUp(self):
         cache.clear()
-        self.user = User.objects.create_user(username='author', password='testpass123')
+        self.user = User.objects.create_user(username="author", password="testpass123")
 
     def test_tag_page_lists_matching_tweets(self):
-        Tweet.objects.create(user=self.user, content='matched #Django')
-        Tweet.objects.create(user=self.user, content='other #Python')
+        Tweet.objects.create(user=self.user, content="matched #Django")
+        Tweet.objects.create(user=self.user, content="other #Python")
 
-        response = self.client.get(reverse('tags:tag_detail', args=['django']))
+        response = self.client.get(reverse("tags:tag_detail", args=["django"]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'matched')
-        self.assertNotContains(response, 'other')
+        self.assertContains(response, "matched")
+        self.assertNotContains(response, "other")
 
     def test_sidebar_shows_trending_tags(self):
-        Tweet.objects.create(user=self.user, content='matched #Django')
+        Tweet.objects.create(user=self.user, content="matched #Django")
 
-        response = self.client.get(reverse('tweets:all_tweets'))
+        response = self.client.get(reverse("tweets:all_tweets"))
 
-        self.assertContains(response, 'Trends')
-        self.assertContains(response, '#django')
+        self.assertContains(response, "Trends")
+        self.assertContains(response, "#django")

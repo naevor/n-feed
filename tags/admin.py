@@ -5,6 +5,6 @@ from .models import Tag
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at')
-    search_fields = ('name',)
-    ordering = ('name',)
+    list_display = ("name", "created_at")
+    search_fields = ("name",)
+    ordering = ("name",)

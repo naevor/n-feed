@@ -14,18 +14,18 @@ class TagViewSet(viewsets.ViewSet):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                name='limit',
+                name="limit",
                 type=int,
                 location=OpenApiParameter.QUERY,
                 required=False,
-                description='Maximum number of trending tags to return.',
+                description="Maximum number of trending tags to return.",
             ),
         ],
         responses=TrendingTagSerializer(many=True),
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def trending(self, request):
-        raw_limit = request.query_params.get('limit', 10)
+        raw_limit = request.query_params.get("limit", 10)
         try:
             limit = max(1, min(int(raw_limit), 50))
         except (TypeError, ValueError):

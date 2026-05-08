@@ -10,10 +10,10 @@ User = get_user_model()
 class SuggestedUserTests(TestCase):
     def setUp(self):
         cache.clear()
-        self.alice = User.objects.create_user(username='alice', password='testpass123')
-        self.bob = User.objects.create_user(username='bob', password='testpass123')
-        self.carol = User.objects.create_user(username='carol', password='testpass123')
-        self.dave = User.objects.create_user(username='dave', password='testpass123')
+        self.alice = User.objects.create_user(username="alice", password="testpass123")
+        self.bob = User.objects.create_user(username="bob", password="testpass123")
+        self.carol = User.objects.create_user(username="carol", password="testpass123")
+        self.dave = User.objects.create_user(username="dave", password="testpass123")
 
     def test_suggested_users_returns_friends_of_friends(self):
         self.alice.following.add(self.bob)

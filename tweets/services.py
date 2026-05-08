@@ -1,4 +1,4 @@
-from .models import Comment, Tweet
+from .models import Tweet
 
 
 def create_tweet(*, user, form=None, content=None, media=None):
@@ -19,7 +19,7 @@ def update_tweet(*, user, tweet, form=None, **fields):
     if form is not None:
         return form.save()
 
-    for field in ('content', 'media'):
+    for field in ("content", "media"):
         if field in fields:
             setattr(tweet, field, fields[field])
     tweet.save()

@@ -16,29 +16,29 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Notification.objects.none()
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, "swagger_fake_view", False):
             return self.queryset
         return user_notifications_qs(user=self.request.user)
 
     @extend_schema(
         responses=inline_serializer(
-            name='NotificationMarkReadResponse',
-            fields={'read': serializers.BooleanField()},
+            name="NotificationMarkReadResponse",
+            fields={"read": serializers.BooleanField()},
         )
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def mark_read(self, request, pk=None):
         notification = self.get_object()
         mark_notification_read(notification=notification)
-        return Response({'read': True})
+        return Response({"read": True})
 
     @extend_schema(
         responses=inline_serializer(
-            name='NotificationMarkAllReadResponse',
-            fields={'marked': serializers.IntegerField()},
+            name="NotificationMarkAllReadResponse",
+            fields={"marked": serializers.IntegerField()},
         )
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     def mark_all_read(self, request):
         count = mark_all_read(user=request.user)
-        return Response({'marked': count})
+        return Response({"marked": count})

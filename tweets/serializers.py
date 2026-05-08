@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from users.serializers import UserMinSerializer
+
 from .models import Comment, Tweet
 
 
@@ -9,8 +10,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'tweet', 'user', 'content', 'created_at']
-        read_only_fields = ['id', 'tweet', 'user', 'created_at']
+        fields = ["id", "tweet", "user", "content", "created_at"]
+        read_only_fields = ["id", "tweet", "user", "created_at"]
 
 
 class TweetSerializer(serializers.ModelSerializer):
@@ -23,16 +24,16 @@ class TweetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tweet
         fields = [
-            'id',
-            'slug',
-            'user',
-            'content',
-            'media',
-            'created_at',
-            'likes_count',
-            'comments_count',
-            'is_liked',
-            'is_bookmarked',
+            "id",
+            "slug",
+            "user",
+            "content",
+            "media",
+            "created_at",
+            "likes_count",
+            "comments_count",
+            "is_liked",
+            "is_bookmarked",
         ]
         read_only_fields = fields
 
@@ -40,4 +41,4 @@ class TweetSerializer(serializers.ModelSerializer):
 class TweetCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tweet
-        fields = ['content', 'media']
+        fields = ["content", "media"]

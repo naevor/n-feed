@@ -5,26 +5,26 @@ from django.db.models import Index
 
 class Notification(models.Model):
     class Kind(models.TextChoices):
-        LIKE = 'like', 'Like'
-        FOLLOW = 'follow', 'Follow'
-        COMMENT = 'comment', 'Comment'
-        MENTION = 'mention', 'Mention'
+        LIKE = "like", "Like"
+        FOLLOW = "follow", "Follow"
+        COMMENT = "comment", "Comment"
+        MENTION = "mention", "Mention"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notifications',
+        related_name="notifications",
     )
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notifications_sent',
+        related_name="notifications_sent",
     )
     kind = models.CharField(max_length=20, choices=Kind.choices)
     tweet = models.ForeignKey(
-        'tweets.Tweet',
+        "tweets.Tweet",
         on_delete=models.CASCADE,
-        related_name='notifications',
+        related_name="notifications",
         blank=True,
         null=True,
     )
@@ -32,11 +32,11 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            Index(fields=['recipient', '-created_at']),
-            Index(fields=['recipient', 'is_read', '-created_at']),
+            Index(fields=["recipient", "-created_at"]),
+            Index(fields=["recipient", "is_read", "-created_at"]),
         ]
 
     def __str__(self):
-        return f'{self.actor} -> {self.recipient}: {self.kind}'
+        return f"{self.actor} -> {self.recipient}: {self.kind}"

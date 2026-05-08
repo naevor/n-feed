@@ -9,10 +9,10 @@ User = get_user_model()
 
 class NotificationSignalTests(TestCase):
     def setUp(self):
-        self.author = User.objects.create_user(username='author', password='testpass123')
-        self.actor = User.objects.create_user(username='actor', password='testpass123')
-        self.mentioned = User.objects.create_user(username='mentioned', password='testpass123')
-        self.tweet = Tweet.objects.create(user=self.author, content='hello world')
+        self.author = User.objects.create_user(username="author", password="testpass123")
+        self.actor = User.objects.create_user(username="actor", password="testpass123")
+        self.mentioned = User.objects.create_user(username="mentioned", password="testpass123")
+        self.tweet = Tweet.objects.create(user=self.author, content="hello world")
 
     def test_like_creates_notification_for_tweet_author(self):
         self.tweet.likes.add(self.actor)
@@ -28,7 +28,7 @@ class NotificationSignalTests(TestCase):
         self.assertFalse(Notification.objects.exists())
 
     def test_comment_creates_notification_for_tweet_author(self):
-        Comment.objects.create(tweet=self.tweet, user=self.actor, content='nice')
+        Comment.objects.create(tweet=self.tweet, user=self.actor, content="nice")
 
         notification = Notification.objects.get(kind=Notification.Kind.COMMENT)
         self.assertEqual(notification.recipient, self.author)
@@ -44,7 +44,7 @@ class NotificationSignalTests(TestCase):
         self.assertIsNone(notification.tweet)
 
     def test_mention_creates_notification_for_mentioned_user(self):
-        tweet = Tweet.objects.create(user=self.author, content='hello @mentioned')
+        tweet = Tweet.objects.create(user=self.author, content="hello @mentioned")
 
         notification = Notification.objects.get(kind=Notification.Kind.MENTION)
         self.assertEqual(notification.recipient, self.mentioned)
@@ -56,7 +56,7 @@ class NotificationSignalTests(TestCase):
         self.tweet.likes.remove(self.actor)
         self.tweet.likes.add(self.actor)
 
-        tweet = Tweet.objects.create(user=self.author, content='hello @mentioned')
+        tweet = Tweet.objects.create(user=self.author, content="hello @mentioned")
         tweet.save()
 
         self.assertEqual(Notification.objects.filter(kind=Notification.Kind.LIKE).count(), 1)

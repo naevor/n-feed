@@ -11,28 +11,28 @@ from tweets.serializers import TweetCreateSerializer, TweetSerializer
 
 
 class TweetViewSet(viewsets.ModelViewSet):
-    lookup_field = 'slug'
+    lookup_field = "slug"
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filterset_fields = ['user__username', 'tags__name']
-    search_fields = ['content']
-    ordering_fields = ['created_at']
+    filterset_fields = ["user__username", "tags__name"]
+    search_fields = ["content"]
+    ordering_fields = ["created_at"]
 
     def get_queryset(self):
         return feed_qs(user=self.request.user)
 
     def get_serializer_class(self):
-        if self.action in ('create', 'update', 'partial_update'):
+        if self.action in ("create", "update", "partial_update"):
             return TweetCreateSerializer
         return TweetSerializer
 
     def get_permissions(self):
-        if self.action in ('update', 'partial_update', 'destroy'):
+        if self.action in ("update", "partial_update", "destroy"):
             return [IsAuthenticatedOrReadOnly(), IsOwnerOrReadOnly()]
         return super().get_permissions()
 
     def get_throttles(self):
-        if self.action == 'create':
-            self.throttle_scope = 'tweet_create'
+        if self.action == "create":
+            self.throttle_scope = "tweet_create"
         return super().get_throttles()
 
     def _serialize_tweet(self, tweet):
@@ -48,7 +48,7 @@ class TweetViewSet(viewsets.ModelViewSet):
 
     @extend_schema(request=TweetCreateSerializer, responses=TweetSerializer)
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop("partial", False)
         tweet = self.get_object()
         serializer = self.get_serializer(tweet, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -61,7 +61,7 @@ class TweetViewSet(viewsets.ModelViewSet):
 
     @extend_schema(request=TweetCreateSerializer, responses=TweetSerializer)
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
@@ -71,24 +71,24 @@ class TweetViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         responses=inline_serializer(
-            name='TweetLikeResponse',
-            fields={'liked': serializers.BooleanField()},
+            name="TweetLikeResponse",
+            fields={"liked": serializers.BooleanField()},
         )
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def like(self, request, slug=None):
         tweet = self.get_object()
         liked = services.toggle_like(user=request.user, tweet=tweet)
-        return Response({'liked': liked})
+        return Response({"liked": liked})
 
     @extend_schema(
         responses=inline_serializer(
-            name='TweetBookmarkResponse',
-            fields={'bookmarked': serializers.BooleanField()},
+            name="TweetBookmarkResponse",
+            fields={"bookmarked": serializers.BooleanField()},
         )
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def bookmark(self, request, slug=None):
         tweet = self.get_object()
         bookmarked = services.toggle_bookmark(user=request.user, tweet=tweet)
-        return Response({'bookmarked': bookmarked})
+        return Response({"bookmarked": bookmarked})

@@ -1,12 +1,13 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
 from .models import CustomUser
 
+
 class RegisterForm(UserCreationForm):
-    
     class Meta:
         model = CustomUser
-        fields = ['username', 'password1', 'password2']  
+        fields = ["username", "password1", "password2"]
 
 
 class EditProfileForm(forms.ModelForm):
@@ -16,7 +17,8 @@ class EditProfileForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ['bio', 'avatar', 'email']
+        fields = ["bio", "avatar", "email"]
+
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(label="Username")

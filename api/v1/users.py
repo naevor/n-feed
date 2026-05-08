@@ -14,28 +14,28 @@ User = get_user_model()
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserDetailSerializer
-    lookup_field = 'username'
-    search_fields = ['username']
-    ordering_fields = ['username']
-    ordering = ['username']
+    lookup_field = "username"
+    search_fields = ["username"]
+    ordering_fields = ["username"]
+    ordering = ["username"]
 
     def get_queryset(self):
-        return User.objects.prefetch_related('followers', 'following').all()
+        return User.objects.prefetch_related("followers", "following").all()
 
     @extend_schema(
         responses=inline_serializer(
-            name='UserFollowResponse',
-            fields={'following': serializers.BooleanField()},
+            name="UserFollowResponse",
+            fields={"following": serializers.BooleanField()},
         )
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def follow(self, request, username=None):
         target = self.get_object()
         result = services.follow_toggle(actor=request.user, target=target)
-        return Response({'following': result is True})
+        return Response({"following": result is True})
 
     @extend_schema(responses=UserMinSerializer(many=True))
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def suggestions(self, request):
         serializer = UserMinSerializer(
             suggested_users(user=request.user),

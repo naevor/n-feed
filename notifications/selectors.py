@@ -5,10 +5,9 @@ from .models import Notification
 
 def user_notifications_qs(*, user):
     return (
-        Notification.objects
-        .filter(recipient=user)
-        .select_related('actor', 'tweet', 'tweet__user')
-        .order_by('-created_at', '-id')
+        Notification.objects.filter(recipient=user)
+        .select_related("actor", "tweet", "tweet__user")
+        .order_by("-created_at", "-id")
     )
 
 
