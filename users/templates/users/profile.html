@@ -16,30 +16,35 @@
             {% endif %}
         </div>
         <div class="profile-info-section">
-            <p><strong>Email:</strong> {{ profile_user.email }}</p>
-            <p><strong>About me:</strong> {{ profile_user.bio }}</p>
-            <p><a href="{% url 'users:followers_list' profile_user.username %}">Followers:</a> {{ profile_user.followers.count }}</p>
-            <p><a href="{% url 'users:following_list' profile_user.username %}">Following:</a> {{ profile_user.following.count }}</p>
+            {% if profile_user == request.user and profile_user.email %}
+                <p><strong>Email:</strong> {{ profile_user.email }}</p>
+            {% endif %}
+            <p><strong>About me:</strong> {{ profile_user.bio|default:"No bio yet." }}</p>
+            <p><a href="{% url 'users:followers_list' profile_user.username %}">Followers:</a> {{ followers_count }}</p>
+            <p><a href="{% url 'users:following_list' profile_user.username %}">Following:</a> {{ following_count }}</p>
         </div>
     </div>
 
     {% if profile_user == request.user %}
     <div class="profile-actions">
         <a href="{% url 'users:edit_profile' %}" class="btn">Edit Profile</a>
-        <a href="{% url 'users:logout' %}" class="btn btn-danger">Exit</a>
+        <form method="post" action="{% url 'users:logout' %}" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Exit</button>
+        </form>
     </div>
-    {% else %}
+    {% elif request.user.is_authenticated %}
     <div class="profile-follow">
         <form method="post" action="{% url 'users:follow' profile_user.username %}">
             {% csrf_token %}
             <button type="submit" class="btn">
-                {% if request.user in profile_user.followers.all %}
-                    Unfollow
-                {% else %}
-                    Follow
-                {% endif %}
+                {% if is_following %}Unfollow{% else %}Follow{% endif %}
             </button>
         </form>
+    </div>
+    {% else %}
+    <div class="profile-follow">
+        <a href="{% url 'users:login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-secondary">Log in to follow</a>
     </div>
     {% endif %}
 

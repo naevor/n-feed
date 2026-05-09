@@ -12,9 +12,10 @@ class UserViewTests(TestCase):
         self.user = User.objects.create_user(username="alice", password="testpass123")
         self.other = User.objects.create_user(username="bob", password="testpass123")
 
-    def test_profile_requires_login(self):
+    def test_profile_is_public(self):
         response = self.client.get(reverse("users:profile", args=["alice"]))
-        self.assertRedirects(response, "/users/login/?next=/users/profile/alice/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Profile of alice")
 
     def test_profile_view_accessible_when_logged_in(self):
         self.client.login(username="alice", password="testpass123")
@@ -26,6 +27,29 @@ class UserViewTests(TestCase):
         response = self.client.get(reverse("users:profile", args=["bob"]))
         self.assertContains(response, reverse("users:profile", args=["alice"]))
         self.assertContains(response, "Profile of bob")
+
+    def test_public_profile_does_not_expose_email_to_other_users(self):
+        self.user.email = "alice@example.com"
+        self.user.save(update_fields=["email"])
+
+        response = self.client.get(reverse("users:profile", args=["alice"]))
+
+        self.assertNotContains(response, "alice@example.com")
+
+    def test_logout_requires_post(self):
+        self.client.login(username="alice", password="testpass123")
+
+        response = self.client.get(reverse("users:logout"))
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_logout_post_logs_user_out(self):
+        self.client.login(username="alice", password="testpass123")
+
+        response = self.client.post(reverse("users:logout"))
+
+        self.assertRedirects(response, reverse("tweets:all_tweets"))
+        self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_follow_toggle_adds_following(self):
         self.client.login(username="alice", password="testpass123")

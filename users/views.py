@@ -34,18 +34,24 @@ def login_view(request):
     return render(request, "users/login.html", {"form": form})
 
 
-@login_required
 def profile_view(request, username):
     profile_user = get_user_by_username(username=username)
-    tweets = user_tweets_qs(author=profile_user, viewer=request.user)
-    mutual_followers = profile_user.followers.filter(id__in=request.user.following.all())
+    viewer = request.user if request.user.is_authenticated else None
+    tweets = user_tweets_qs(author=profile_user, viewer=viewer)
+    is_following = bool(
+        request.user.is_authenticated
+        and request.user != profile_user
+        and profile_user.followers.filter(pk=request.user.pk).exists()
+    )
     return render(
         request,
         "users/profile.html",
         {
             "profile_user": profile_user,
             "tweets": tweets,
-            "mutual_followers": mutual_followers,
+            "followers_count": profile_user.followers.count(),
+            "following_count": profile_user.following.count(),
+            "is_following": is_following,
         },
     )
 
@@ -63,6 +69,7 @@ def edit_profile_view(request):
 
 
 @login_required
+@require_POST
 def logout_view(request):
     logout(request)
     return redirect("tweets:all_tweets")
@@ -76,7 +83,6 @@ def follow_user_view(request, username):
     return redirect("users:profile", username=username)
 
 
-@login_required
 def followers_list_view(request, username):
     profile_user = get_user_by_username(username=username)
     return render(
@@ -89,7 +95,6 @@ def followers_list_view(request, username):
     )
 
 
-@login_required
 def following_list_view(request, username):
     profile_user = get_user_by_username(username=username)
     return render(
