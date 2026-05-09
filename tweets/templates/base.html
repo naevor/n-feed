@@ -12,27 +12,27 @@
         <div class="sidebar-container">
             <div class="sidebar">
                 <a href="{% url 'tweets:all_tweets' %}" class="menu-item">
-                    <span class="icon">🏠</span> Main
+                    <span class="icon" aria-hidden="true">&#8962;</span> Main
                 </a>
                 <a href="{% url 'notifications:list' %}" class="menu-item">
-                    <span class="icon">🔔</span> Notifications
+                    <span class="icon" aria-hidden="true">&#9679;</span> Notifications
                     {% if unread_notifications %}
                         <span class="badge">{{ unread_notifications }}</span>
                     {% endif %}
                 </a>
-                <a href="{% url "tweets:bookmarks_list" %}" class="menu-item">
-                    <span class="icon">📘</span> Bookmarks
+                <a href="{% url 'tweets:bookmarks_list' %}" class="menu-item">
+                    <span class="icon" aria-hidden="true">&#9632;</span> Bookmarks
                 </a>
-                <a href="#" class="menu-item">
-                    <span class="icon">✉️</span> Messages
-                </a>
+                <span class="menu-item menu-item-disabled">
+                    <span class="icon" aria-hidden="true">&#9993;</span> Messages
+                </span>
                 {% if user.is_authenticated %}
                     <a href="{% url 'users:profile' user.username %}" class="menu-item">
-                        <span class="icon">👤</span> Profile
+                        <span class="icon" aria-hidden="true">&#9787;</span> Profile
                     </a>
                 {% else %}
                     <a href="{% url 'users:login' %}" class="menu-item">
-                        <span class="icon">👤</span> Login
+                        <span class="icon" aria-hidden="true">&#9787;</span> Login
                     </a>
                 {% endif %}
                 {% if user.is_authenticated %}
@@ -58,8 +58,8 @@
         <aside class="right-panel-container">
             <div class="right-panel">
                 <div class="trends">
+                    <h2>Trends</h2>
                     {% if trending_tags %}
-                        <h2>Trends</h2>
                         <ul class="side-list">
                             {% for tag in trending_tags %}
                                 <li>
@@ -68,6 +68,8 @@
                                 </li>
                             {% endfor %}
                         </ul>
+                    {% else %}
+                        <p class="muted">No trends yet.</p>
                     {% endif %}
                 </div>
                 <div class="who-to-follow">
