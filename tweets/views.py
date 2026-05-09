@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -76,11 +77,12 @@ def bookmarks_list(request):
     return render(request, "tweets/bookmarks_list.html", {"page": page})
 
 
-@login_required
 def tweet_detail(request, slug):
     tweet = tweet_with_comments(slug=slug, user=request.user)
 
     if request.method == "POST":
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
         form = CommentForm(request.POST)
         if form.is_valid():
             services.add_comment(user=request.user, tweet=tweet, form=form)
@@ -134,10 +136,10 @@ def like_tweet(request, tweet_id):
 
 
 @login_required
+@require_POST
 def add_comment(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
-    if request.method == "POST":
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            services.add_comment(user=request.user, tweet=tweet, form=form)
+    form = CommentForm(request.POST)
+    if form.is_valid():
+        services.add_comment(user=request.user, tweet=tweet, form=form)
     return redirect("tweets:all_tweets")

@@ -18,6 +18,23 @@ class TweetViewTests(TestCase):
         self.assertContains(response, "hello searchable world")
         self.assertNotContains(response, "something else")
 
+    def test_tweet_detail_is_public(self):
+        response = self.client.get(reverse("tweets:tweet_detail", args=[self.tweet.slug]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "hello searchable world")
+
+    def test_anonymous_comment_redirects_to_login(self):
+        response = self.client.post(
+            reverse("tweets:tweet_detail", args=[self.tweet.slug]),
+            {"content": "anonymous comment"},
+        )
+
+        self.assertRedirects(
+            response,
+            f"/users/login/?next={reverse('tweets:tweet_detail', args=[self.tweet.slug])}",
+        )
+
     def test_like_requires_post(self):
         self.client.login(username="author", password="testpass123")
         response = self.client.get(reverse("tweets:like_tweet", args=[self.tweet.id]))
@@ -44,6 +61,11 @@ class TweetViewTests(TestCase):
     def test_bookmark_requires_post(self):
         self.client.login(username="author", password="testpass123")
         response = self.client.get(reverse("tweets:toggle_bookmark", args=[self.tweet.id]))
+        self.assertEqual(response.status_code, 405)
+
+    def test_add_comment_requires_post(self):
+        self.client.login(username="author", password="testpass123")
+        response = self.client.get(reverse("tweets:add_comment", args=[self.tweet.id]))
         self.assertEqual(response.status_code, 405)
 
     def test_like_redirects_back_to_next_url(self):

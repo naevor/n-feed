@@ -1,40 +1,82 @@
 {% extends "base.html" %}
+{% load static %}
 {% load tweet_formatting %}
 
 {% block content %}
 
-<h2>{{ tweet.user.username }}</h2>
-<p>{{ tweet.content|format_tweet }}</p>
-<p>{{ tweet.created_at }}</p>
+<article class="tweet-card tweet-detail-card">
+    <div class="tweet-header">
+        <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
+            {% if tweet.user.avatar %}
+                <img src="{{ tweet.user.avatar.url }}" alt="Avatar" class="avatar">
+            {% else %}
+                <img src="{% static 'img/default-avatar.png' %}" alt="Avatar" class="avatar">
+            {% endif %}
+            <span>{{ tweet.user.username }}</span>
+        </a>
+        <span class="tweet-date">{{ tweet.created_at }}</span>
+    </div>
 
-{% if tweet.media %}
-    <img src="{{ tweet.media.url }}" alt="Tweet Media">
-{% endif %}
+    <p class="tweet-content">{{ tweet.content|format_tweet }}</p>
 
-<p>Likes: {{ tweet.likes_count }}</p>
-<form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <button type="submit">
-        {% if tweet.is_liked %}Remove Like{% else %}Like{% endif %}
-    </button>
-</form>
+    {% if tweet.media %}
+        <img src="{{ tweet.media.url }}" alt="Tweet Media" class="tweet-media">
+    {% endif %}
+
+    <div class="tweet-actions">
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn">
+                    {{ tweet.likes_count }} {% if tweet.is_liked %}Unlike{% else %}Like{% endif %}
+                </button>
+            </form>
+            <form method="post" action="{% url 'tweets:toggle_bookmark' tweet.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn">
+                    {% if tweet.is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}
+                </button>
+            </form>
+            {% if tweet.user == user %}
+                <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
+                <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'tweets:all_tweets' %}">
+                    <button type="submit" class="btn text-danger">Delete</button>
+                </form>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'users:login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-secondary">Log in to interact</a>
+        {% endif %}
+    </div>
+</article>
 
 <h3>Comments</h3>
-<ul>
+<ul class="comment-list">
     {% for comment in comments %}
-        <li>
+        <li class="comment-card">
             <strong>{{ comment.user.username }}</strong>: {{ comment.content|format_tweet }}
             <p>{{ comment.created_at }}</p>
         </li>
+    {% empty %}
+        <li class="muted">No comments yet.</li>
     {% endfor %}
 </ul>
 
-<h4>Add Comment:</h4>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Comment</button>
-</form>
+{% if user.is_authenticated %}
+    <h4>Add Comment:</h4>
+    <form method="post" class="comment-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Comment</button>
+    </form>
+{% else %}
+    <p>
+        <a href="{% url 'users:login' %}?next={{ request.get_full_path|urlencode }}">Log in</a>
+        to add a comment.
+    </p>
+{% endif %}
 
 {% endblock %}
