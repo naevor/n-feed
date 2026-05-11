@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 try:
     from dotenv import load_dotenv
@@ -12,17 +12,60 @@ except ImportError:
 if load_dotenv:
     load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY", "unsafe-dev-secret-key-for-local-development-only-change-me"
-)
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes", "on")
+def env_bool(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.lower() in ("1", "true", "yes", "on")
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-    if host.strip()
-]
+
+def env_list(name, default=""):
+    return [item.strip() for item in os.environ.get(name, default).split(",") if item.strip()]
+
+
+def build_database_config(*, default_engine="sqlite", postgres_host="localhost"):
+    engine = os.environ.get("DB_ENGINE", default_engine).lower()
+    if engine == "postgres":
+        return {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": os.environ.get("POSTGRES_DB", "n_feed"),
+                "USER": os.environ.get("POSTGRES_USER", "postgres"),
+                "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
+                "HOST": os.environ.get("POSTGRES_HOST", postgres_host),
+                "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+            }
+        }
+
+    return {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / os.environ.get("SQLITE_DB_NAME", "db.sqlite3"),
+        }
+    }
+
+
+def build_cache_config(*, default_redis_url=""):
+    redis_url = os.environ.get("REDIS_URL", default_redis_url)
+    if redis_url:
+        return {
+            "default": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": redis_url,
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                },
+            }
+        }
+
+    return {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "n-feed-dev-cache",
+        }
+    }
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -76,31 +119,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "twitmain.wsgi.application"
 
-DB_ENGINE = os.environ.get("DB_ENGINE", "sqlite").lower()
-
-if DB_ENGINE == "postgres":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB", "n_feed"),
-            "USER": os.environ.get("POSTGRES_USER", "postgres"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
-            "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
-        }
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / os.environ.get("SQLITE_DB_NAME", "db.sqlite3"),
-        }
-    }
-
-
 AUTH_USER_MODEL = "users.CustomUser"
 LOGIN_URL = "/users/login/"
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -117,41 +137,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "style"]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-REDIS_URL = os.environ.get("REDIS_URL")
-if REDIS_URL:
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": REDIS_URL,
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            },
-        }
-    }
-else:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "n-feed-dev-cache",
-        }
-    }
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
