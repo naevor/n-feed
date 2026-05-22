@@ -97,45 +97,7 @@
     </div>
     {% if user.is_authenticated %}
         <div class="toast-stack" data-toast-stack></div>
-        <script>
-            (() => {
-                const badge = document.querySelector("[data-notification-badge]");
-                const toastStack = document.querySelector("[data-toast-stack]");
-                if (!badge || !toastStack || !("WebSocket" in window)) {
-                    return;
-                }
-
-                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                const socket = new WebSocket(`${protocol}://${window.location.host}/ws/notifications/`);
-
-                const incrementBadge = () => {
-                    const currentCount = Number.parseInt(badge.dataset.count || "0", 10);
-                    const nextCount = Number.isNaN(currentCount) ? 1 : currentCount + 1;
-                    badge.dataset.count = String(nextCount);
-                    badge.textContent = String(nextCount);
-                    badge.hidden = false;
-                };
-
-                const showToast = (notification) => {
-                    const actor = notification?.actor?.username || "Someone";
-                    const kind = notification?.kind || "notification";
-                    const toast = document.createElement("div");
-                    toast.className = "toast";
-                    toast.textContent = `${actor}: ${kind}`;
-                    toastStack.appendChild(toast);
-                    window.setTimeout(() => toast.remove(), 5000);
-                };
-
-                socket.addEventListener("message", (event) => {
-                    const message = JSON.parse(event.data);
-                    if (message.type !== "notification.created") {
-                        return;
-                    }
-                    incrementBadge();
-                    showToast(message.notification);
-                });
-            })();
-        </script>
+        <script src="{% static 'notifications.js' %}" defer></script>
     {% endif %}
 </body>
 </html>
