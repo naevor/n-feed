@@ -2,18 +2,19 @@
 
 [![CI](https://github.com/naevor/n-feed/actions/workflows/ci.yml/badge.svg)](https://github.com/naevor/n-feed/actions/workflows/ci.yml)
 
-n-feed is a Django Twitter-style backend project with server-rendered pages, a versioned REST API, JWT auth, hashtags, notifications, tests, CI, and Docker-ready production settings.
+n-feed is a Django Twitter-style backend project with server-rendered pages, a versioned REST API, JWT auth, hashtags, real-time notifications, tests, CI, and Docker-ready production settings.
 
 ## Stack
 
 - Django 5.2
 - Django REST Framework
 - Simple JWT
+- Channels and Daphne
 - drf-spectacular OpenAPI docs
 - PostgreSQL or SQLite
 - Redis cache
 - pytest, ruff, pre-commit
-- Docker Compose with PostgreSQL, Redis, Gunicorn, Nginx
+- Docker Compose with PostgreSQL, Redis, Daphne, Nginx
 
 ## Local Development
 
@@ -51,6 +52,7 @@ Useful endpoints:
 - `GET /api/redoc/`
 - `GET /api/v1/tweets/`
 - `GET /api/v1/tags/trending/`
+- `WS /ws/notifications/`
 
 ## Checks
 

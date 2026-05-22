@@ -19,6 +19,7 @@ CSRF_TRUSTED_ORIGINS = base.env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 DATABASES = base.build_database_config(default_engine="postgres", postgres_host="db")
 CACHES = base.build_cache_config(default_redis_url="redis://redis:6379/1")
+CHANNEL_LAYERS = base.build_channel_layer_config(default_redis_url="redis://redis:6379/2")
 
 MIDDLEWARE = [*base.MIDDLEWARE]
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")

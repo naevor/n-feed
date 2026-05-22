@@ -321,6 +321,31 @@ img {
     text-align: center;
 }
 
+.badge[hidden] {
+    display: none;
+}
+
+.toast-stack {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(320px, calc(100vw - 32px));
+}
+
+.toast {
+    padding: 12px 14px;
+    overflow-wrap: anywhere;
+    background-color: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
 .profile-section {
     display: flex;
     align-items: center;

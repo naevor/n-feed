@@ -39,11 +39,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_PORT: "5432"
       REDIS_URL: redis://redis:6379/1
+      CHANNEL_LAYER_REDIS_URL: redis://redis:6379/2
     volumes:
       - media:/app/media
     command: >
       sh -c "python manage.py migrate --noinput &&
-             gunicorn twitmain.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -"
+             daphne -b 0.0.0.0 -p 8000 twitmain.asgi:application"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/healthz/ || exit 1"]
       interval: 10s

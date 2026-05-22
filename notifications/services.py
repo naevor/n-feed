@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from .models import Notification
+from .realtime import broadcast_notification
 
 MENTION_RE = re.compile(r"@([A-Za-z0-9_]{2,150})")
 
@@ -31,9 +32,14 @@ def create_notification(*, recipient, actor, kind, tweet=None, dedupe=True):
         "tweet": tweet,
     }
     if dedupe:
-        notification, _ = Notification.objects.get_or_create(**data)
-        return notification
-    return Notification.objects.create(**data)
+        notification, created = Notification.objects.get_or_create(**data)
+    else:
+        notification = Notification.objects.create(**data)
+        created = True
+
+    if created:
+        broadcast_notification(notification)
+    return notification
 
 
 def notify_tweet_mentions(*, tweet):

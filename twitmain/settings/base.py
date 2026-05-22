@@ -67,13 +67,34 @@ def build_cache_config(*, default_redis_url=""):
     }
 
 
+def build_channel_layer_config(*, default_redis_url=""):
+    redis_url = os.environ.get("CHANNEL_LAYER_REDIS_URL", default_redis_url)
+    if redis_url:
+        return {
+            "default": {
+                "BACKEND": "channels_redis.core.RedisChannelLayer",
+                "CONFIG": {
+                    "hosts": [redis_url],
+                },
+            }
+        }
+
+    return {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+
+
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
@@ -118,6 +139,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "twitmain.wsgi.application"
+ASGI_APPLICATION = "twitmain.asgi.application"
+
+CHANNEL_LAYERS = build_channel_layer_config(default_redis_url="")
 
 AUTH_USER_MODEL = "users.CustomUser"
 LOGIN_URL = "/users/login/"
