@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from .models import Notification
-from .realtime import broadcast_notification
+from .realtime import broadcast_notification, broadcast_unread_count
 
 MENTION_RE = re.compile(r"@([A-Za-z0-9_]{2,150})")
 
@@ -42,6 +42,14 @@ def create_notification(*, recipient, actor, kind, tweet=None, dedupe=True):
     return notification
 
 
+def _broadcast_unread_count_after_commit(user_id):
+    def broadcast():
+        unread_count = Notification.objects.filter(recipient_id=user_id, is_read=False).count()
+        broadcast_unread_count(user_id=user_id, unread_count=unread_count)
+
+    transaction.on_commit(broadcast)
+
+
 def notify_tweet_mentions(*, tweet):
     usernames = extract_mentions_from_text(tweet.content)
     if not usernames:
@@ -67,8 +75,12 @@ def mark_notification_read(*, notification):
     if not notification.is_read:
         notification.is_read = True
         notification.save(update_fields=["is_read"])
+        _broadcast_unread_count_after_commit(notification.recipient_id)
     return notification
 
 
 def mark_all_read(*, user):
-    return Notification.objects.filter(recipient=user, is_read=False).update(is_read=True)
+    count = Notification.objects.filter(recipient=user, is_read=False).update(is_read=True)
+    if count:
+        _broadcast_unread_count_after_commit(user.id)
+    return count

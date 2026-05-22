@@ -11,7 +11,7 @@ from django.test import TransactionTestCase, override_settings
 from notifications.consumers import NotificationConsumer
 from notifications.models import Notification
 from notifications.realtime import notification_group_name, notification_payload
-from notifications.services import create_notification
+from notifications.services import create_notification, mark_all_read, mark_notification_read
 from tweets.models import Tweet
 
 User = get_user_model()
@@ -51,7 +51,12 @@ class NotificationRealtimeTests(TransactionTestCase):
         )
         payload = notification_payload(notification)
 
-        message = async_to_sync(self._send_notification_event)(payload)
+        message = async_to_sync(self._send_notification_event)(
+            {
+                "type": "notification.created",
+                "payload": payload,
+            }
+        )
 
         self.assertEqual(message["type"], "notification.created")
         self.assertEqual(message["notification"]["kind"], Notification.Kind.LIKE)
@@ -81,7 +86,51 @@ class NotificationRealtimeTests(TransactionTestCase):
 
         broadcast.assert_called_once()
 
-    async def _send_notification_event(self, payload):
+    def test_mark_read_broadcasts_unread_count(self):
+        notification = Notification.objects.create(
+            recipient=self.recipient,
+            actor=self.actor,
+            kind=Notification.Kind.LIKE,
+            tweet=self.tweet,
+        )
+
+        with patch("notifications.services.broadcast_unread_count") as broadcast:
+            mark_notification_read(notification=notification)
+
+        broadcast.assert_called_once_with(user_id=self.recipient.id, unread_count=0)
+
+    def test_mark_all_read_broadcasts_unread_count_once(self):
+        Notification.objects.create(
+            recipient=self.recipient,
+            actor=self.actor,
+            kind=Notification.Kind.LIKE,
+            tweet=self.tweet,
+        )
+        Notification.objects.create(
+            recipient=self.recipient,
+            actor=self.actor,
+            kind=Notification.Kind.COMMENT,
+            tweet=self.tweet,
+        )
+
+        with patch("notifications.services.broadcast_unread_count") as broadcast:
+            count = mark_all_read(user=self.recipient)
+
+        self.assertEqual(count, 2)
+        broadcast.assert_called_once_with(user_id=self.recipient.id, unread_count=0)
+
+    def test_authenticated_user_receives_unread_count_event(self):
+        message = async_to_sync(self._send_notification_event)(
+            {
+                "type": "notification.unread_count",
+                "payload": {"unread_count": 3},
+            }
+        )
+
+        self.assertEqual(message["type"], "notification.unread_count")
+        self.assertEqual(message["unread_count"], 3)
+
+    async def _send_notification_event(self, event):
         communicator = WebsocketCommunicator(
             NotificationConsumer.as_asgi(),
             "/ws/notifications/",
@@ -94,10 +143,7 @@ class NotificationRealtimeTests(TransactionTestCase):
         channel_layer = get_channel_layer()
         await channel_layer.group_send(
             notification_group_name(self.recipient.id),
-            {
-                "type": "notification.created",
-                "payload": payload,
-            },
+            event,
         )
 
         message = await communicator.receive_json_from(timeout=1)

@@ -26,3 +26,11 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                 "notification": event["payload"],
             }
         )
+
+    async def notification_unread_count(self, event):
+        await self.send_json(
+            {
+                "type": "notification.unread_count",
+                "unread_count": event["payload"]["unread_count"],
+            }
+        )
