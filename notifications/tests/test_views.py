@@ -54,3 +54,11 @@ class NotificationViewTests(TestCase):
         response = self.client.get(reverse("tweets:all_tweets"))
 
         self.assertEqual(response.context["unread_notifications"], 1)
+
+    def test_authenticated_layout_loads_realtime_notification_client(self):
+        self.client.login(username="recipient", password="testpass123")
+
+        response = self.client.get(reverse("tweets:all_tweets"))
+
+        self.assertContains(response, "data-notification-badge")
+        self.assertContains(response, "notifications.js")
