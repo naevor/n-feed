@@ -5,6 +5,7 @@ from channels.layers import get_channel_layer
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.db import transaction
 from django.test import TransactionTestCase, override_settings
 
 from notifications.consumers import NotificationConsumer
@@ -64,6 +65,19 @@ class NotificationRealtimeTests(TransactionTestCase):
                 kind=Notification.Kind.LIKE,
                 tweet=self.tweet,
             )
+
+        broadcast.assert_called_once()
+
+    def test_create_notification_broadcast_waits_for_transaction_commit(self):
+        with patch("notifications.services.broadcast_notification") as broadcast:
+            with transaction.atomic():
+                create_notification(
+                    recipient=self.recipient,
+                    actor=self.actor,
+                    kind=Notification.Kind.LIKE,
+                    tweet=self.tweet,
+                )
+                broadcast.assert_not_called()
 
         broadcast.assert_called_once()
 

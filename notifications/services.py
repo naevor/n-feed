@@ -38,7 +38,7 @@ def create_notification(*, recipient, actor, kind, tweet=None, dedupe=True):
         created = True
 
     if created:
-        broadcast_notification(notification)
+        transaction.on_commit(lambda: broadcast_notification(notification))
     return notification
 
 
