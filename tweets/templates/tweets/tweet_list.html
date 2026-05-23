@@ -3,16 +3,23 @@
 {% load tweet_formatting %}
 {% block content %}
 
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Live feed</p>
+        <h1>Latest tweets</h1>
+    </div>
+</header>
+
 <div class="search-bar">
-    <form method="get" action="{% url 'tweets:all_tweets' %}">
-        <input type="text" name="q" value="{{ query }}" placeholder="Searching tweets" class="search-input">
+    <form method="get" action="{% url 'tweets:all_tweets' %}" class="search-form">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search tweets" class="search-input">
         <button type="submit" class="search-btn">Search</button>
     </form>
 </div>
 
 <div class="tweet-form">
     {% if user.is_authenticated %}
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" class="form-panel">
             {% csrf_token %}
             {{ form.as_p }}
             <button type="submit" class="btn tweet-btn">Tweet</button>
@@ -60,7 +67,7 @@
                             <form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button type="submit" class="btn">
+                                <button type="submit" class="btn btn-secondary">
                                     {{ tweet.likes_count }} {% if tweet.is_liked %}Unlike{% else %}Like{% endif %}
                                 </button>
                             </form>
@@ -68,7 +75,7 @@
                             <form method="post" action="{% url 'tweets:toggle_bookmark' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button type="submit" class="btn">
+                                <button type="submit" class="btn btn-secondary">
                                     {% if tweet.is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}
                                 </button>
                             </form>
@@ -81,7 +88,7 @@
                             <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button type="submit" class="btn text-danger">Delete</button>
+                                <button type="submit" class="btn btn-danger">Delete</button>
                             </form>
                         {% endif %}
                     </div>
@@ -101,7 +108,10 @@
             </div>
         {% endif %}
     {% else %}
-        <p>There are no tweets.</p>
+        <div class="empty-state">
+            <h2>There are no tweets.</h2>
+            <p class="muted">Once someone posts, the feed will appear here.</p>
+        </div>
     {% endif %}
 </div>
 {% endblock %}

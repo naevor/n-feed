@@ -2,7 +2,12 @@
 {% load static %}
 {% load tweet_formatting %}
 {% block content %}
-<h1>Bookmarks</h1>
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Saved</p>
+        <h1>Bookmarks</h1>
+    </div>
+</header>
 <div class="tweets">
     {% if page.object_list %}
         <ul class="tweet-list">
@@ -42,7 +47,10 @@
             </div>
         {% endif %}
     {% else %}
-        <p>There are no bookmarks.</p>
+        <div class="empty-state">
+            <h2>There are no bookmarks.</h2>
+            <p class="muted">Saved tweets will appear here.</p>
+        </div>
     {% endif %}
 </div>
 {% endblock %}

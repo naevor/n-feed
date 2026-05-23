@@ -4,6 +4,13 @@
 
 {% block content %}
 
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Tweet detail</p>
+        <h1>{{ tweet.user.username }}</h1>
+    </div>
+</header>
+
 <article class="tweet-card tweet-detail-card">
     <div class="tweet-header">
         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
@@ -28,14 +35,14 @@
             <form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="btn">
+                <button type="submit" class="btn btn-secondary">
                     {{ tweet.likes_count }} {% if tweet.is_liked %}Unlike{% else %}Like{% endif %}
                 </button>
             </form>
             <form method="post" action="{% url 'tweets:toggle_bookmark' tweet.id %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="btn">
+                <button type="submit" class="btn btn-secondary">
                     {% if tweet.is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}
                 </button>
             </form>
@@ -44,7 +51,7 @@
                 <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'tweets:all_tweets' %}">
-                    <button type="submit" class="btn text-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             {% endif %}
         {% else %}
@@ -53,21 +60,24 @@
     </div>
 </article>
 
-<h3>Comments</h3>
+<h2 class="section-title">Comments</h2>
 <ul class="comment-list">
     {% for comment in comments %}
         <li class="comment-card">
-            <strong>{{ comment.user.username }}</strong>: {{ comment.content|format_tweet }}
-            <p>{{ comment.created_at }}</p>
+            <div class="comment-header">
+                <strong>{{ comment.user.username }}</strong>
+                <span>{{ comment.created_at }}</span>
+            </div>
+            <p>{{ comment.content|format_tweet }}</p>
         </li>
     {% empty %}
-        <li class="muted">No comments yet.</li>
+        <li class="empty-state">No comments yet.</li>
     {% endfor %}
 </ul>
 
 {% if user.is_authenticated %}
-    <h4>Add Comment:</h4>
-    <form method="post" class="comment-form">
+    <form method="post" class="comment-form form-panel">
+        <h3>Add comment</h3>
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit" class="btn">Comment</button>
