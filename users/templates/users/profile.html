@@ -5,8 +5,13 @@
 {% block title %}Profile of {{ profile_user.username }}{% endblock %}
 
 {% block content %}
-<div class="profile-container">
-    <h1>Profile of {{ profile_user.username }}</h1>
+<div class="profile-container profile-hero">
+    <div class="profile-heading">
+        <div>
+            <p class="eyebrow">Profile</p>
+            <h1>{{ profile_user.username }}</h1>
+        </div>
+    </div>
     <div class="profile-details">
         <div class="profile-avatar-section">
             {% if profile_user.avatar %}
@@ -17,11 +22,19 @@
         </div>
         <div class="profile-info-section">
             {% if profile_user == request.user and profile_user.email %}
-                <p><strong>Email:</strong> {{ profile_user.email }}</p>
+                <p class="profile-meta"><strong>Email</strong><span>{{ profile_user.email }}</span></p>
             {% endif %}
-            <p><strong>About me:</strong> {{ profile_user.bio|default:"No bio yet." }}</p>
-            <p><a href="{% url 'users:followers_list' profile_user.username %}">Followers:</a> {{ followers_count }}</p>
-            <p><a href="{% url 'users:following_list' profile_user.username %}">Following:</a> {{ following_count }}</p>
+            <p class="profile-meta"><strong>About</strong><span>{{ profile_user.bio|default:"No bio yet." }}</span></p>
+            <div class="profile-stats">
+                <a href="{% url 'users:followers_list' profile_user.username %}" class="stat-card">
+                    <strong>{{ followers_count }}</strong>
+                    <span>Followers</span>
+                </a>
+                <a href="{% url 'users:following_list' profile_user.username %}" class="stat-card">
+                    <strong>{{ following_count }}</strong>
+                    <span>Following</span>
+                </a>
+            </div>
         </div>
     </div>
 
@@ -48,15 +61,15 @@
     </div>
     {% endif %}
 
-    <h3>Tweets {{ profile_user.username }}</h3>
+    <h2 class="section-title">Tweets by {{ profile_user.username }}</h2>
     {% if tweets %}
         <ul class="tweet-list">
             {% for tweet in tweets %}
                 <li class="tweet-card">
-                    <p>
+                    <p class="tweet-content">
                         {{ tweet.content|format_tweet }}
                     </p>
-                    <p><small>{{ tweet.created_at }}</small></p>
+                    <p class="tweet-date">{{ tweet.created_at }}</p>
                     {% if tweet.media %}
                         <img src="{{ tweet.media.url }}" alt="Tweet Media" class="tweet-media">
                     {% endif %}
@@ -68,7 +81,7 @@
                             <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button type="submit" class="btn text-danger">Delete</button>
+                                <button type="submit" class="btn btn-danger">Delete</button>
                             </form>
                         </div>
                     {% else %}
@@ -80,7 +93,10 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p>{{ profile_user.username }} hasn't tweeted anything.</p>
+        <div class="empty-state">
+            <h2>No tweets yet.</h2>
+            <p class="muted">{{ profile_user.username }} hasn't tweeted anything.</p>
+        </div>
     {% endif %}
 </div>
 {% endblock %}

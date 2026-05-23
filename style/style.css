@@ -230,7 +230,9 @@ select:focus {
 }
 
 .form-panel,
-.comment-form {
+.comment-form,
+.auth-card,
+.list-panel {
     max-width: 680px;
     margin: 0 auto;
     padding: 18px;
@@ -255,6 +257,9 @@ select:focus {
 .form-panel textarea,
 .form-panel input,
 .form-panel select,
+.auth-form input,
+.auth-form textarea,
+.auth-form select,
 .comment-form textarea,
 .comment-form input {
     width: 100%;
@@ -265,6 +270,27 @@ select:focus {
     border-radius: 10px;
     color: var(--text);
     font: inherit;
+}
+
+.auth-card {
+    max-width: 460px;
+    padding: 26px;
+}
+
+.auth-card h1 {
+    margin: 0 0 18px;
+}
+
+.auth-form p {
+    margin: 0 0 14px;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .tweet-btn {
@@ -559,6 +585,18 @@ select:focus {
     box-shadow: var(--shadow);
 }
 
+.profile-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.profile-heading h1 {
+    margin: 0;
+    font-size: clamp(30px, 5vw, 44px);
+}
+
 .profile-details {
     display: flex;
     gap: 28px;
@@ -584,6 +622,52 @@ select:focus {
 .profile-info-section {
     flex: 2;
     min-width: 0;
+}
+
+.profile-meta {
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 12px;
+    margin: 0 0 14px;
+}
+
+.profile-meta strong {
+    color: var(--muted);
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.stat-card {
+    display: block;
+    padding: 14px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.stat-card:hover {
+    border-color: var(--accent);
+}
+
+.stat-card strong,
+.stat-card span {
+    display: block;
+}
+
+.stat-card strong {
+    font-size: 24px;
+}
+
+.stat-card span {
+    color: var(--muted);
+    font-size: 13px;
 }
 
 .btn {
@@ -631,8 +715,15 @@ select:focus {
     margin: 10px 0;
 }
 
+.user-list {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
 .btn-flwr {
     display: inline-block;
+    width: 100%;
     padding: 10px 15px;
     background-color: var(--panel-raised);
     color: var(--text);
@@ -679,6 +770,11 @@ select:focus {
     .search-bar form,
     .profile-details {
         flex-direction: column;
+    }
+
+    .profile-meta,
+    .profile-stats {
+        grid-template-columns: 1fr;
     }
 
     .tweet-header {

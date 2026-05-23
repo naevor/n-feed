@@ -1,11 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Edit Tweet</h2>
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Tweet</p>
+        <h1>Edit tweet</h1>
+    </div>
+</header>
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" class="form-panel">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Save Changes</button>
-    <a href="{% url 'tweets:all_tweets' %}" class="btn btn-warning">Cancel</a>
+    <button type="submit" class="btn">Save changes</button>
+    <a href="{% url 'tweets:all_tweets' %}" class="btn btn-secondary">Cancel</a>
 </form>
 {% endblock %}

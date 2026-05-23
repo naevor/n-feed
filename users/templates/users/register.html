@@ -1,17 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Registration{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+    <p class="eyebrow">New account</p>
     <h1>Registration</h1>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" class="auth-form">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Tap to Register</button>
+        <button type="submit" class="btn">Create account</button>
     </form>
-    <p>Already have an account? <a href="{% url 'users:login' %}">Login</a></p>
-</body>
-</html>
+    <p class="muted">Already have an account? <a href="{% url 'users:login' %}">Login</a></p>
+</section>
+{% endblock %}

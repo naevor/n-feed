@@ -1,17 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deleting account</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Deleting account{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+    <p class="eyebrow">Danger zone</p>
     <h1>Account deletion confirmation</h1>
-    <p>Are you sure you want to delete your account? This action is irreversible</p>
-    <form method="post">
+    <p class="muted">Are you sure you want to delete your account? This action is irreversible.</p>
+    <form method="post" class="auth-form">
         {% csrf_token %}
-        <button type="submit">Delete Account</button>
+        <button type="submit" class="btn btn-danger">Delete account</button>
     </form>
-    <a href="{% url 'users:profile' username=request.user.username %}">Cancel</a>
-</body>
-</html>
+    <a href="{% url 'users:profile' username=request.user.username %}" class="btn btn-secondary">Cancel</a>
+</section>
+{% endblock %}

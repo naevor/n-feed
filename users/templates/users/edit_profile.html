@@ -3,13 +3,18 @@
 {% block title %}Editing profile{% endblock %}
 
 {% block content %}
-<h1>Editing profile</h1>
-<div class="form-container">
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Account</p>
+        <h1>Editing profile</h1>
+    </div>
+</header>
+<div class="form-container form-panel">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit" class="btn">Save</button>
     </form>
-    <a href="{% url 'users:profile' request.user.username %}" class="btn">Back to Profile</a>
+    <a href="{% url 'users:profile' request.user.username %}" class="btn btn-secondary">Back to profile</a>
 </div>
 {% endblock %}

@@ -3,13 +3,18 @@
 {% block title %}Followers of {{ profile_user.username }}{% endblock %}
 
 {% block content %}
+<section class="list-panel">
+<p class="eyebrow">Network</p>
 <h1>Followers {{ profile_user.username }}</h1>
-<ul class="follower-list">
+<ul class="follower-list user-list">
     {% for follower in followers %}
         <li>
             <a href="{% url 'users:profile' follower.username %}" class="btn-flwr">{{ follower.username }}</a>
         </li>
+    {% empty %}
+        <li class="muted">No followers yet.</li>
     {% endfor %}
 </ul>
-<a href="{% url 'users:profile' profile_user.username %}" class="btn-flwr">Back to profile</a>
+<a href="{% url 'users:profile' profile_user.username %}" class="btn btn-secondary">Back to profile</a>
+</section>
 {% endblock %}
