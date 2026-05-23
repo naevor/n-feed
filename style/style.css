@@ -166,6 +166,13 @@ img {
     line-height: 1.1;
 }
 
+.page-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
 .eyebrow {
     margin: 0 0 6px;
     color: var(--accent);
@@ -299,6 +306,7 @@ select:focus {
 
 .tweet-list,
 .comment-list,
+.notification-list,
 .follower-list,
 .following-list {
     list-style: none;
@@ -307,7 +315,8 @@ select:focus {
 }
 
 .tweet-card,
-.comment-card {
+.comment-card,
+.notification-card {
     max-width: 680px;
     margin: 0 auto 24px;
     padding: 20px;
@@ -321,6 +330,45 @@ select:focus {
 .tweet-card:hover {
     background-color: var(--panel-hover);
     border-color: var(--border-strong);
+}
+
+.notification-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.notification-card.unread {
+    border-color: rgba(56, 189, 248, 0.45);
+}
+
+.notification-card.unread::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    margin-top: 8px;
+    background: var(--accent);
+    border-radius: 999px;
+}
+
+.notification-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-body p {
+    margin: 10px 0;
+}
+
+.notification-body small {
+    color: var(--muted);
+}
+
+.notification-action {
+    flex: 0 0 auto;
+    margin: 0;
 }
 
 .tweet-detail-card {
@@ -784,5 +832,11 @@ select:focus {
 
     .tweet-date {
         font-size: 14px;
+    }
+
+    .page-header-row,
+    .notification-card {
+        align-items: stretch;
+        flex-direction: column;
     }
 }

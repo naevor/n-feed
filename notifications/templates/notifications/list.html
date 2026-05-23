@@ -3,19 +3,26 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
-<h1>Notifications</h1>
+<header class="page-header page-header-row">
+    <div>
+        <p class="eyebrow">Activity</p>
+        <h1>Notifications</h1>
+    </div>
 
 {% if page.object_list %}
     <form method="post" action="{% url 'notifications:mark_all_read' %}">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button type="submit" class="btn">Mark all read</button>
+        <button type="submit" class="btn btn-secondary">Mark all read</button>
     </form>
+{% endif %}
+</header>
 
-    <ul class="tweet-list">
+{% if page.object_list %}
+    <ul class="notification-list">
         {% for notification in page %}
-            <li class="tweet-card">
-                <p>
+            <li class="notification-card {% if not notification.is_read %}unread{% endif %}">
+                <div class="notification-body">
                     <a href="{% url 'users:profile' notification.actor.username %}">
                         {{ notification.actor.username }}
                     </a>
@@ -28,20 +35,20 @@
                     {% elif notification.kind == 'mention' %}
                         mentioned you
                     {% endif %}
-                </p>
 
-                {% if notification.tweet %}
-                    <p>
-                        <a href="{% url 'tweets:tweet_detail' notification.tweet.slug %}">
-                            {{ notification.tweet.content|truncatechars:120 }}
-                        </a>
-                    </p>
-                {% endif %}
+                    {% if notification.tweet %}
+                        <p>
+                            <a href="{% url 'tweets:tweet_detail' notification.tweet.slug %}">
+                                {{ notification.tweet.content|truncatechars:120 }}
+                            </a>
+                        </p>
+                    {% endif %}
 
-                <p><small>{{ notification.created_at }}</small></p>
+                    <small>{{ notification.created_at }}</small>
+                </div>
 
                 {% if not notification.is_read %}
-                    <form method="post" action="{% url 'notifications:mark_read' notification.id %}">
+                    <form method="post" action="{% url 'notifications:mark_read' notification.id %}" class="notification-action">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <button type="submit" class="btn">Mark read</button>
@@ -63,6 +70,9 @@
         </div>
     {% endif %}
 {% else %}
-    <p>There are no notifications.</p>
+    <div class="empty-state">
+        <h2>There are no notifications.</h2>
+        <p class="muted">Likes, follows, comments and mentions will appear here.</p>
+    </div>
 {% endif %}
 {% endblock %}

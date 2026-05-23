@@ -5,7 +5,12 @@
 {% block title %}#{{ tag_name }}{% endblock %}
 
 {% block content %}
-<h1>#{{ tag_name }}</h1>
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Tag</p>
+        <h1>#{{ tag_name }}</h1>
+    </div>
+</header>
 
 <div class="tweets">
     {% if page.object_list %}
@@ -51,7 +56,10 @@
             </div>
         {% endif %}
     {% else %}
-        <p>There are no tweets for this tag.</p>
+        <div class="empty-state">
+            <h2>There are no tweets for this tag.</h2>
+            <p class="muted">When someone uses #{{ tag_name }}, it will appear here.</p>
+        </div>
     {% endif %}
 </div>
 {% endblock %}
