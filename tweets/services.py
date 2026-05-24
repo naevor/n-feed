@@ -1,4 +1,11 @@
+from django.db import transaction
+
 from .models import Tweet
+from .realtime import broadcast_tweet_created
+
+
+def _broadcast_tweet_created_after_commit(tweet):
+    transaction.on_commit(lambda: broadcast_tweet_created(tweet))
 
 
 def create_tweet(*, user, form=None, content=None, media=None):
@@ -6,11 +13,14 @@ def create_tweet(*, user, form=None, content=None, media=None):
         tweet = form.save(commit=False)
         tweet.user = user
         tweet.save()
+        _broadcast_tweet_created_after_commit(tweet)
         return tweet
 
     if content is None:
         raise ValueError("content is required")
-    return Tweet.objects.create(user=user, content=content, media=media)
+    tweet = Tweet.objects.create(user=user, content=content, media=media)
+    _broadcast_tweet_created_after_commit(tweet)
+    return tweet
 
 
 def update_tweet(*, user, tweet, form=None, **fields):

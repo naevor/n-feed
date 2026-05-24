@@ -17,7 +17,13 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "twitmain.settings")
 
 django_asgi_app = get_asgi_application()
 
-from notifications.routing import websocket_urlpatterns  # noqa: E402
+from notifications import routing as notification_routing  # noqa: E402
+from tweets import routing as tweet_routing  # noqa: E402
+
+websocket_urlpatterns = [
+    *notification_routing.websocket_urlpatterns,
+    *tweet_routing.websocket_urlpatterns,
+]
 
 application = ProtocolTypeRouter(
     {

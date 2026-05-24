@@ -1,0 +1,65 @@
+from unittest.mock import patch
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from channels.testing import WebsocketCommunicator
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.test import TransactionTestCase, override_settings
+
+from tweets.consumers import FeedConsumer
+from tweets.models import Tweet
+from tweets.realtime import feed_group_name, tweet_payload
+from tweets.services import create_tweet
+
+User = get_user_model()
+
+
+CHANNEL_TEST_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
+
+
+@override_settings(CHANNEL_LAYERS=CHANNEL_TEST_LAYERS)
+class TweetRealtimeTests(TransactionTestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="author", password="testpass123")
+
+    def test_feed_websocket_receives_created_tweet(self):
+        tweet = Tweet.objects.create(user=self.user, content="live tweet")
+        message = async_to_sync(self._send_feed_event)(
+            {
+                "type": "tweet.created",
+                "payload": tweet_payload(tweet),
+            }
+        )
+
+        self.assertEqual(message["type"], "tweet.created")
+        self.assertEqual(message["tweet"]["content"], "live tweet")
+        self.assertEqual(message["tweet"]["user"]["username"], "author")
+
+    def test_create_tweet_broadcasts_after_commit(self):
+        with patch("tweets.services.broadcast_tweet_created") as broadcast:
+            with transaction.atomic():
+                tweet = create_tweet(user=self.user, content="created through service")
+                broadcast.assert_not_called()
+
+        broadcast.assert_called_once_with(tweet)
+
+    async def _send_feed_event(self, event):
+        communicator = WebsocketCommunicator(
+            FeedConsumer.as_asgi(),
+            "/ws/feed/",
+        )
+
+        connected, _ = await communicator.connect()
+        assert connected
+
+        channel_layer = get_channel_layer()
+        await channel_layer.group_send(feed_group_name(), event)
+
+        message = await communicator.receive_json_from(timeout=1)
+        await communicator.disconnect()
+        return message
