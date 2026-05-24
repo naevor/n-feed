@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from notifications.models import Notification
-from notifications.selectors import user_notifications_qs
+from notifications.selectors import unread_count, user_notifications_qs
 from notifications.serializers import NotificationSerializer
 from notifications.services import mark_all_read, mark_notification_read
 
@@ -23,22 +23,28 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     @extend_schema(
         responses=inline_serializer(
             name="NotificationMarkReadResponse",
-            fields={"read": serializers.BooleanField()},
+            fields={
+                "read": serializers.BooleanField(),
+                "unread_count": serializers.IntegerField(),
+            },
         )
     )
     @action(detail=True, methods=["post"])
     def mark_read(self, request, pk=None):
         notification = self.get_object()
         mark_notification_read(notification=notification)
-        return Response({"read": True})
+        return Response({"read": True, "unread_count": unread_count(user=request.user)})
 
     @extend_schema(
         responses=inline_serializer(
             name="NotificationMarkAllReadResponse",
-            fields={"marked": serializers.IntegerField()},
+            fields={
+                "marked": serializers.IntegerField(),
+                "unread_count": serializers.IntegerField(),
+            },
         )
     )
     @action(detail=False, methods=["post"])
     def mark_all_read(self, request):
         count = mark_all_read(user=request.user)
-        return Response({"marked": count})
+        return Response({"marked": count, "unread_count": unread_count(user=request.user)})
