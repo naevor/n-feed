@@ -150,6 +150,25 @@ img {
     color: var(--muted);
 }
 
+.suggestion-item {
+    align-items: center;
+}
+
+.suggestion-copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.suggestion-copy a {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-copy span {
+    font-size: 12px;
+}
+
 .main-content {
     min-width: 0;
     padding: 28px 0 40px;
@@ -330,6 +349,23 @@ select:focus {
 .tweet-card:hover {
     background-color: var(--panel-hover);
     border-color: var(--border-strong);
+}
+
+.tweet-card-live {
+    border-color: rgba(52, 211, 153, 0.45);
+}
+
+.tweet-card-live::before {
+    content: "Live";
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 3px 8px;
+    background: rgba(52, 211, 153, 0.14);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    border-radius: 999px;
+    color: var(--success);
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .notification-card {
@@ -745,6 +781,11 @@ select:focus {
 
 .btn-secondary:hover {
     background-color: var(--panel-hover);
+}
+
+.btn-small {
+    padding: 7px 10px;
+    font-size: 13px;
 }
 
 .btn-danger,

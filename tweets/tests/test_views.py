@@ -58,6 +58,13 @@ class TweetViewTests(TestCase):
         response = self.client.get(reverse("tweets:all_tweets"))
         self.assertContains(response, "1")
 
+    def test_feed_loads_realtime_client(self):
+        response = self.client.get(reverse("tweets:all_tweets"))
+
+        self.assertContains(response, "data-feed-container")
+        self.assertContains(response, "data-feed-list")
+        self.assertContains(response, "feed.js")
+
     def test_bookmark_requires_post(self):
         self.client.login(username="author", password="testpass123")
         response = self.client.get(reverse("tweets:toggle_bookmark", args=[self.tweet.id]))

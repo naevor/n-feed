@@ -36,11 +36,15 @@
    </a>
 </div>
 
-<div class="tweets">
-    {% if page.object_list %}
-        <ul class="tweet-list">
+<div
+    class="tweets"
+    data-feed-container
+    data-default-avatar-url="{% static 'img/default-avatar.png' %}"
+>
+    <ul class="tweet-list" data-feed-list {% if not page.object_list %}hidden{% endif %}>
+        {% if page.object_list %}
             {% for tweet in page %}
-                <li class="tweet-card">
+                <li class="tweet-card" data-tweet-id="{{ tweet.id }}">
                     <div class="tweet-header">
                         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
                             {% if tweet.user.avatar %}
@@ -94,8 +98,10 @@
                     </div>
                 </li>
             {% endfor %}
-        </ul>
+        {% endif %}
+    </ul>
 
+    {% if page.object_list %}
         {% if page.has_previous or page.has_next %}
             <div class="pagination">
                 {% if page.has_previous %}
@@ -107,11 +113,12 @@
                 {% endif %}
             </div>
         {% endif %}
-    {% else %}
-        <div class="empty-state">
-            <h2>There are no tweets.</h2>
-            <p class="muted">Once someone posts, the feed will appear here.</p>
-        </div>
     {% endif %}
+
+    <div class="empty-state" data-feed-empty {% if page.object_list %}hidden{% endif %}>
+        <h2>There are no tweets.</h2>
+        <p class="muted">Once someone posts, the feed will appear here.</p>
+    </div>
 </div>
+<script src="{% static 'feed.js' %}" defer></script>
 {% endblock %}
