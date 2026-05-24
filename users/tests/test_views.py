@@ -56,6 +56,14 @@ class UserViewTests(TestCase):
         self.client.post(reverse("users:follow", args=["bob"]))
         self.assertIn(self.other, self.user.following.all())
 
+    def test_follow_toggle_redirects_back_to_next_url(self):
+        self.client.login(username="alice", password="testpass123")
+        next_url = reverse("tweets:all_tweets")
+
+        response = self.client.post(reverse("users:follow", args=["bob"]), {"next": next_url})
+
+        self.assertRedirects(response, next_url)
+
     def test_follow_toggle_removes_following(self):
         self.user.following.add(self.other)
         self.client.login(username="alice", password="testpass123")
@@ -77,3 +85,5 @@ class UserViewTests(TestCase):
 
         self.assertContains(response, "Who to follow")
         self.assertContains(response, "carol")
+        self.assertContains(response, reverse("users:follow", args=["carol"]))
+        self.assertContains(response, "Follow")

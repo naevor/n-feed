@@ -100,10 +100,18 @@
                         <h2>Who to follow</h2>
                         <ul class="side-list">
                             {% for suggested_user in suggested_users %}
-                                <li>
-                                    <a href="{% url 'users:profile' suggested_user.username %}">
-                                        {{ suggested_user.username }}
-                                    </a>
+                                <li class="suggestion-item">
+                                    <div class="suggestion-copy">
+                                        <a href="{% url 'users:profile' suggested_user.username %}">
+                                            {{ suggested_user.username }}
+                                        </a>
+                                        <span>Suggested</span>
+                                    </div>
+                                    <form method="post" action="{% url 'users:follow' suggested_user.username %}" class="inline-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit" class="btn btn-secondary btn-small">Follow</button>
+                                    </form>
                                 </li>
                             {% endfor %}
                         </ul>

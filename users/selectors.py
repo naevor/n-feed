@@ -6,6 +6,11 @@ from .models import CustomUser
 
 SUGGESTED_USERS_CACHE_TTL_SECONDS = 3600
 SUGGESTED_USERS_CACHE_LIMIT = 50
+SUGGESTED_USERS_CACHE_VERSION = "v1"
+
+
+def suggested_users_cache_key(user_id):
+    return f"suggested_users:{user_id}:{SUGGESTED_USERS_CACHE_VERSION}"
 
 
 def get_user_by_username(*, username):
@@ -19,7 +24,7 @@ def suggested_users(*, user, limit=5):
     if not user.is_authenticated:
         return CustomUser.objects.none()
 
-    cache_key = f"suggested_users:{user.pk}:v1"
+    cache_key = suggested_users_cache_key(user.pk)
     suggested_ids = cache.get(cache_key)
     if suggested_ids is None:
         following_ids = list(user.following.values_list("id", flat=True))

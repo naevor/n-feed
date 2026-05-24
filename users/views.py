@@ -1,6 +1,7 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from tweets.selectors import user_tweets_qs
@@ -8,6 +9,17 @@ from tweets.selectors import user_tweets_qs
 from . import services
 from .forms import EditProfileForm, LoginForm, RegisterForm
 from .selectors import get_user_by_username
+
+
+def _redirect_after_action(request, *, fallback_username):
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER")
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
+    return redirect("users:profile", username=fallback_username)
 
 
 def register_view(request):
@@ -80,7 +92,7 @@ def logout_view(request):
 def follow_user_view(request, username):
     target = get_user_by_username(username=username)
     services.follow_toggle(actor=request.user, target=target)
-    return redirect("users:profile", username=username)
+    return _redirect_after_action(request, fallback_username=username)
 
 
 def followers_list_view(request, username):
