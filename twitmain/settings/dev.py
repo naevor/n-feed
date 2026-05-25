@@ -13,3 +13,4 @@ DATABASES = base.build_database_config(default_engine="sqlite", postgres_host="l
 CACHES = base.build_cache_config(default_redis_url="")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+CELERY_TASK_ALWAYS_EAGER = base.env_bool("CELERY_TASK_ALWAYS_EAGER", True)
