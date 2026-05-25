@@ -26,7 +26,7 @@ def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST, request.FILES)
         if form.is_valid():
-            user = form.save()
+            user = services.create_user(form=form)
             login(request, user)
             return redirect("users:profile", username=user.username)
     else:
