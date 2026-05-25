@@ -10,11 +10,12 @@ n-feed is a Django Twitter-style backend project with server-rendered pages, a v
 - Django REST Framework
 - Simple JWT
 - Channels and Daphne
+- Celery and django-celery-beat
 - drf-spectacular OpenAPI docs
 - PostgreSQL or SQLite
 - Redis cache
 - pytest, ruff, pre-commit
-- Docker Compose with PostgreSQL, Redis, Daphne, Nginx
+- Docker Compose with PostgreSQL, Redis, Daphne, Celery, Nginx
 
 ## Local Development
 
@@ -53,6 +54,19 @@ Useful endpoints:
 - `GET /api/v1/tweets/`
 - `GET /api/v1/tags/trending/`
 - `WS /ws/notifications/`
+- `WS /ws/feed/`
+
+Docker Compose starts the web process, a Celery worker, and Celery beat. The web container runs migrations and creates the default periodic task that removes old notifications.
+
+For local development without Redis, Celery tasks run eagerly by default through `CELERY_TASK_ALWAYS_EAGER=True`.
+If you want to test the real queue locally, run Redis and set:
+
+```powershell
+$env:CELERY_TASK_ALWAYS_EAGER="False"
+$env:CELERY_BROKER_URL="redis://localhost:6379/0"
+celery -A twitmain worker -l info
+celery -A twitmain beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+```
 
 ## Checks
 
