@@ -50,7 +50,7 @@ services:
              python manage.py configure_periodic_tasks &&
              daphne -b 0.0.0.0 -p 8000 twitmain.asgi:application"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/healthz/ || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/readyz/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
