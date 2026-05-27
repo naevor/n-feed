@@ -6,11 +6,13 @@
 <section class="auth-card">
     <p class="eyebrow">Danger zone</p>
     <h1>Account deletion confirmation</h1>
-    <p class="muted">Are you sure you want to delete your account? This action is irreversible.</p>
+    <p class="muted">This will permanently delete your account, profile data, tweets, comments, likes, and bookmarks.</p>
     <form method="post" class="auth-form">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Delete account</button>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Delete account</button>
+            <a href="{% url 'users:profile' username=request.user.username %}" class="btn btn-secondary">Cancel</a>
+        </div>
     </form>
-    <a href="{% url 'users:profile' username=request.user.username %}" class="btn btn-secondary">Cancel</a>
 </section>
 {% endblock %}

@@ -470,6 +470,7 @@ select:focus {
 .tweet-actions,
 .profile-actions,
 .profile-follow,
+.form-actions,
 .pagination {
     display: flex;
     align-items: center;
@@ -481,6 +482,7 @@ select:focus {
 .tweet-actions form,
 .profile-actions form,
 .profile-follow form,
+.form-actions form,
 .inline-form {
     margin: 0;
 }
@@ -797,6 +799,18 @@ select:focus {
 .btn-danger:hover,
 .text-danger:hover {
     background-color: var(--danger-hover);
+}
+
+.btn-outline-danger {
+    background-color: rgba(251, 91, 114, 0.08);
+    color: var(--danger);
+    border: 1px solid rgba(251, 91, 114, 0.45);
+}
+
+.btn-outline-danger:hover {
+    background-color: rgba(251, 91, 114, 0.16);
+    color: white;
+    border-color: var(--danger);
 }
 
 .follower-list li,

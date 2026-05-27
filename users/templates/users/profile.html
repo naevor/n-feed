@@ -41,6 +41,7 @@
     {% if profile_user == request.user %}
     <div class="profile-actions">
         <a href="{% url 'users:edit_profile' %}" class="btn">Edit Profile</a>
+        <a href="{% url 'users:delete_account' %}" class="btn btn-outline-danger">Delete Account</a>
         <form method="post" action="{% url 'users:logout' %}" class="inline-form">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">Exit</button>
@@ -77,7 +78,7 @@
                     {% if tweet.user == request.user %}
                         <div class="tweet-actions">
                             <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
-                            <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
+                            <a href="{% url 'tweets:edit_tweet' tweet.id %}?next={{ request.get_full_path|urlencode }}" class="btn">Edit</a>
                             <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">

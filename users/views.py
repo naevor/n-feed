@@ -122,6 +122,8 @@ def following_list_view(request, username):
 @login_required
 def delete_account_view(request):
     if request.method == "POST":
-        services.delete_account(user=request.user)
+        user = request.user
+        logout(request)
+        services.delete_account(user=user)
         return redirect("tweets:all_tweets")
     return render(request, "users/delete_account.html")
