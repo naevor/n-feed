@@ -47,6 +47,15 @@ class TweetViewTests(TestCase):
         self.assertEqual(response.status_code, 405)
         self.assertTrue(Tweet.objects.filter(id=self.tweet.id).exists())
 
+    def test_non_owner_delete_returns_forbidden(self):
+        User.objects.create_user(username="other", password="testpass123")
+        self.client.login(username="other", password="testpass123")
+
+        response = self.client.post(reverse("tweets:delete_tweet", args=[self.tweet.id]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Tweet.objects.filter(id=self.tweet.id).exists())
+
     def test_anonymous_api_post_is_denied(self):
         response = self.client.post("/api/v1/tweets/", {"content": "anonymous api post"})
         self.assertEqual(response.status_code, 401)
@@ -92,6 +101,30 @@ class TweetViewTests(TestCase):
             {"next": next_url},
         )
         self.assertRedirects(response, next_url)
+
+    def test_edit_tweet_redirects_back_to_next_url(self):
+        self.client.login(username="author", password="testpass123")
+        next_url = reverse("users:profile", args=["author"])
+
+        response = self.client.post(
+            reverse("tweets:edit_tweet", args=[self.tweet.id]),
+            {"content": "edited from profile", "next": next_url},
+        )
+
+        self.assertRedirects(response, next_url)
+        self.tweet.refresh_from_db()
+        self.assertEqual(self.tweet.content, "edited from profile")
+
+    def test_edit_tweet_cancel_uses_next_url(self):
+        self.client.login(username="author", password="testpass123")
+        next_url = reverse("users:profile", args=["author"])
+
+        response = self.client.get(
+            reverse("tweets:edit_tweet", args=[self.tweet.id]), {"next": next_url}
+        )
+
+        self.assertContains(response, f'value="{next_url}"')
+        self.assertContains(response, f'href="{next_url}"')
 
     def test_subscriptions_page_renders_tweet_form(self):
         self.client.login(username="author", password="testpass123")

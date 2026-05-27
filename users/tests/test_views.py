@@ -22,6 +22,21 @@ class UserViewTests(TestCase):
         response = self.client.get(reverse("users:profile", args=["alice"]))
         self.assertEqual(response.status_code, 200)
 
+    def test_own_profile_links_to_delete_account(self):
+        self.client.login(username="alice", password="testpass123")
+
+        response = self.client.get(reverse("users:profile", args=["alice"]))
+
+        self.assertContains(response, reverse("users:delete_account"))
+        self.assertContains(response, "Delete Account")
+
+    def test_other_profile_does_not_link_to_delete_account(self):
+        self.client.login(username="alice", password="testpass123")
+
+        response = self.client.get(reverse("users:profile", args=["bob"]))
+
+        self.assertNotContains(response, reverse("users:delete_account"))
+
     def test_sidebar_profile_link_points_to_authenticated_user(self):
         self.client.login(username="alice", password="testpass123")
         response = self.client.get(reverse("users:profile", args=["bob"]))
@@ -49,6 +64,21 @@ class UserViewTests(TestCase):
         response = self.client.post(reverse("users:logout"))
 
         self.assertRedirects(response, reverse("tweets:all_tweets"))
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_delete_account_requires_login(self):
+        response = self.client.get(reverse("users:delete_account"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("users:login"), response["Location"])
+
+    def test_delete_account_post_deletes_user_and_logs_out(self):
+        self.client.login(username="alice", password="testpass123")
+
+        response = self.client.post(reverse("users:delete_account"))
+
+        self.assertRedirects(response, reverse("tweets:all_tweets"))
+        self.assertFalse(User.objects.filter(username="alice").exists())
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_follow_toggle_adds_following(self):
