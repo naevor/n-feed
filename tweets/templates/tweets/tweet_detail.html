@@ -47,7 +47,7 @@
                 </button>
             </form>
             {% if tweet.user == user %}
-                <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
+                <a href="{% url 'tweets:edit_tweet' tweet.id %}?next={{ request.get_full_path|urlencode }}" class="btn">Edit</a>
                 <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'tweets:all_tweets' %}">

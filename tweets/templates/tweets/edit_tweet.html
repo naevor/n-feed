@@ -9,8 +9,13 @@
 
 <form method="post" enctype="multipart/form-data" class="form-panel">
     {% csrf_token %}
+    {% if next_url %}
+        <input type="hidden" name="next" value="{{ next_url }}">
+    {% endif %}
     {{ form.as_p }}
-    <button type="submit" class="btn">Save changes</button>
-    <a href="{% url 'tweets:all_tweets' %}" class="btn btn-secondary">Cancel</a>
+    <div class="form-actions">
+        <button type="submit" class="btn">Save changes</button>
+        <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'tweets:all_tweets' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+    </div>
 </form>
 {% endblock %}

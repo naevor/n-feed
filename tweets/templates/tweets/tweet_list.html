@@ -88,7 +88,7 @@
                         {% endif %}
 
                         {% if tweet.user == user %}
-                            <a href="{% url 'tweets:edit_tweet' tweet.id %}" class="btn">Edit</a>
+                            <a href="{% url 'tweets:edit_tweet' tweet.id %}?next={{ request.get_full_path|urlencode }}" class="btn">Edit</a>
                             <form method="post" action="{% url 'tweets:delete_tweet' tweet.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
@@ -105,11 +105,11 @@
         {% if page.has_previous or page.has_next %}
             <div class="pagination">
                 {% if page.has_previous %}
-                    <a href="?page={{ page.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn">Previous</a>
+                    <a href="?page={{ page.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}" class="btn">Previous</a>
                 {% endif %}
                 <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
                 {% if page.has_next %}
-                    <a href="?page={{ page.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn">Next</a>
+                    <a href="?page={{ page.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}" class="btn">Next</a>
                 {% endif %}
             </div>
         {% endif %}

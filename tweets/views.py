@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -13,13 +14,22 @@ from .selectors import bookmarks_qs, feed_qs, subscriptions_feed_qs, tweet_with_
 PAGE_SIZE = 20
 
 
-def _redirect_after_action(request):
-    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER")
+def _safe_next_url(request):
+    next_url = (
+        request.POST.get("next") or request.GET.get("next") or request.META.get("HTTP_REFERER")
+    )
     if next_url and url_has_allowed_host_and_scheme(
         next_url,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
     ):
+        return next_url
+    return None
+
+
+def _redirect_after_action(request):
+    next_url = _safe_next_url(request)
+    if next_url:
         return redirect(next_url)
     return redirect("tweets:all_tweets")
 
@@ -110,10 +120,12 @@ def edit_tweet(request, tweet_id):
         form = TweetForm(request.POST, request.FILES, instance=tweet)
         if form.is_valid():
             services.update_tweet(user=request.user, tweet=tweet, form=form)
-            return redirect("tweets:all_tweets")
+            return _redirect_after_action(request)
     else:
         form = TweetForm(instance=tweet)
-    return render(request, "tweets/edit_tweet.html", {"form": form})
+    return render(
+        request, "tweets/edit_tweet.html", {"form": form, "next_url": _safe_next_url(request)}
+    )
 
 
 @login_required
@@ -123,7 +135,7 @@ def delete_tweet(request, tweet_id):
     try:
         services.delete_tweet_by_user(user=request.user, tweet=tweet)
     except PermissionError:
-        pass
+        raise PermissionDenied("You cannot delete this tweet.") from None
     return _redirect_after_action(request)
 
 
