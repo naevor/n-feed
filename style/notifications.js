@@ -5,6 +5,12 @@
         return;
     }
 
+    const reconnectBaseDelayMs = 1000;
+    const reconnectMaxDelayMs = 30000;
+    let reconnectAttempts = 0;
+    let reconnectTimer = null;
+    let socket = null;
+
     const setBadgeCount = (count) => {
         const normalizedCount = Math.max(Number.parseInt(count || "0", 10) || 0, 0);
         badge.dataset.count = String(normalizedCount);
@@ -36,11 +42,13 @@
         window.setTimeout(() => toast.remove(), 5000);
     };
 
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const socket = new WebSocket(`${protocol}://${window.location.host}/ws/notifications/`);
-
-    socket.addEventListener("message", (event) => {
-        const message = JSON.parse(event.data);
+    const handleMessage = (event) => {
+        let message;
+        try {
+            message = JSON.parse(event.data);
+        } catch {
+            return;
+        }
         if (message.type === "notification.created") {
             incrementBadge();
             showToast(message.notification);
@@ -50,5 +58,47 @@
         if (message.type === "notification.unread_count") {
             setBadgeCount(message.unread_count);
         }
+    };
+
+    const scheduleReconnect = () => {
+        if (reconnectTimer || document.hidden) {
+            return;
+        }
+
+        const delay = Math.min(
+            reconnectBaseDelayMs * 2 ** reconnectAttempts,
+            reconnectMaxDelayMs
+        );
+        reconnectAttempts += 1;
+        reconnectTimer = window.setTimeout(() => {
+            reconnectTimer = null;
+            connect();
+        }, delay);
+    };
+
+    const connect = () => {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        socket = new WebSocket(`${protocol}://${window.location.host}/ws/notifications/`);
+
+        socket.addEventListener("open", () => {
+            reconnectAttempts = 0;
+        });
+        socket.addEventListener("message", handleMessage);
+        socket.addEventListener("close", (event) => {
+            if (event.code !== 4401) {
+                scheduleReconnect();
+            }
+        });
+        socket.addEventListener("error", () => {
+            socket.close();
+        });
+    };
+
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && (!socket || socket.readyState === WebSocket.CLOSED)) {
+            scheduleReconnect();
+        }
     });
+
+    connect();
 })();

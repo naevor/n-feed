@@ -10,6 +10,11 @@
     const seenTweetIds = new Set(
         Array.from(list.querySelectorAll("[data-tweet-id]")).map((item) => item.dataset.tweetId)
     );
+    const reconnectBaseDelayMs = 1000;
+    const reconnectMaxDelayMs = 30000;
+    let reconnectAttempts = 0;
+    let reconnectTimer = null;
+    let socket = null;
 
     const createText = (tagName, className, text) => {
         const element = document.createElement(tagName);
@@ -80,10 +85,7 @@
         list.prepend(createTweetCard(tweet));
     };
 
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const socket = new WebSocket(`${protocol}://${window.location.host}/ws/feed/`);
-
-    socket.addEventListener("message", (event) => {
+    const handleMessage = (event) => {
         let message;
         try {
             message = JSON.parse(event.data);
@@ -94,5 +96,43 @@
         if (message.type === "tweet.created") {
             insertTweet(message.tweet);
         }
+    };
+
+    const scheduleReconnect = () => {
+        if (reconnectTimer || document.hidden) {
+            return;
+        }
+
+        const delay = Math.min(
+            reconnectBaseDelayMs * 2 ** reconnectAttempts,
+            reconnectMaxDelayMs
+        );
+        reconnectAttempts += 1;
+        reconnectTimer = window.setTimeout(() => {
+            reconnectTimer = null;
+            connect();
+        }, delay);
+    };
+
+    const connect = () => {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        socket = new WebSocket(`${protocol}://${window.location.host}/ws/feed/`);
+
+        socket.addEventListener("open", () => {
+            reconnectAttempts = 0;
+        });
+        socket.addEventListener("message", handleMessage);
+        socket.addEventListener("close", scheduleReconnect);
+        socket.addEventListener("error", () => {
+            socket.close();
+        });
+    };
+
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && (!socket || socket.readyState === WebSocket.CLOSED)) {
+            scheduleReconnect();
+        }
     });
+
+    connect();
 })();
