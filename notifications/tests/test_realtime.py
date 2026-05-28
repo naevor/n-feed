@@ -63,7 +63,10 @@ class NotificationRealtimeTests(TransactionTestCase):
         self.assertEqual(message["notification"]["actor"]["username"], self.actor.username)
 
     def test_create_notification_broadcasts_when_notification_is_new(self):
-        with patch("notifications.services.broadcast_notification") as broadcast:
+        with (
+            patch("notifications.services.broadcast_notification") as broadcast_notification,
+            patch("notifications.services.broadcast_unread_count") as broadcast_unread_count,
+        ):
             create_notification(
                 recipient=self.recipient,
                 actor=self.actor,
@@ -71,10 +74,33 @@ class NotificationRealtimeTests(TransactionTestCase):
                 tweet=self.tweet,
             )
 
-        broadcast.assert_called_once()
+        notification = Notification.objects.get(kind=Notification.Kind.LIKE)
+        broadcast_notification.assert_called_once_with(notification)
+        broadcast_unread_count.assert_called_once_with(user_id=self.recipient.id, unread_count=1)
+
+    def test_create_notification_broadcasts_current_unread_count(self):
+        Notification.objects.create(
+            recipient=self.recipient,
+            actor=self.actor,
+            kind=Notification.Kind.COMMENT,
+            tweet=self.tweet,
+        )
+
+        with patch("notifications.services.broadcast_unread_count") as broadcast:
+            create_notification(
+                recipient=self.recipient,
+                actor=self.actor,
+                kind=Notification.Kind.LIKE,
+                tweet=self.tweet,
+            )
+
+        broadcast.assert_called_once_with(user_id=self.recipient.id, unread_count=2)
 
     def test_create_notification_broadcast_waits_for_transaction_commit(self):
-        with patch("notifications.services.broadcast_notification") as broadcast:
+        with (
+            patch("notifications.services.broadcast_notification") as broadcast_notification,
+            patch("notifications.services.broadcast_unread_count") as broadcast_unread_count,
+        ):
             with transaction.atomic():
                 create_notification(
                     recipient=self.recipient,
@@ -82,9 +108,11 @@ class NotificationRealtimeTests(TransactionTestCase):
                     kind=Notification.Kind.LIKE,
                     tweet=self.tweet,
                 )
-                broadcast.assert_not_called()
+                broadcast_notification.assert_not_called()
+                broadcast_unread_count.assert_not_called()
 
-        broadcast.assert_called_once()
+        broadcast_notification.assert_called_once()
+        broadcast_unread_count.assert_called_once_with(user_id=self.recipient.id, unread_count=1)
 
     def test_mark_read_broadcasts_unread_count(self):
         notification = Notification.objects.create(

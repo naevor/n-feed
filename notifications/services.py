@@ -38,8 +38,20 @@ def create_notification(*, recipient, actor, kind, tweet=None, dedupe=True):
         created = True
 
     if created:
-        transaction.on_commit(lambda: broadcast_notification(notification))
+        _broadcast_created_notification_after_commit(notification)
     return notification
+
+
+def _broadcast_created_notification_after_commit(notification):
+    def broadcast():
+        unread_count = Notification.objects.filter(
+            recipient_id=notification.recipient_id,
+            is_read=False,
+        ).count()
+        broadcast_notification(notification)
+        broadcast_unread_count(user_id=notification.recipient_id, unread_count=unread_count)
+
+    transaction.on_commit(broadcast)
 
 
 def _broadcast_unread_count_after_commit(user_id):
