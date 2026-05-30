@@ -46,3 +46,27 @@ def broadcast_tweet_created(tweet):
         },
     )
     return True
+
+
+def broadcast_tweet_likes_changed(*, tweet_id, likes_count, actor_user_id=None, liked=None):
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return False
+
+    payload = {
+        "tweet_id": tweet_id,
+        "likes_count": likes_count,
+    }
+    if actor_user_id is not None:
+        payload["actor_user_id"] = actor_user_id
+    if liked is not None:
+        payload["liked"] = liked
+
+    async_to_sync(channel_layer.group_send)(
+        feed_group_name(),
+        {
+            "type": "tweet.likes_changed",
+            "payload": payload,
+        },
+    )
+    return True

@@ -21,3 +21,11 @@ class FeedConsumer(AsyncJsonWebsocketConsumer):
                 "tweet": event["payload"],
             }
         )
+
+    async def tweet_likes_changed(self, event):
+        await self.send_json(
+            {
+                "type": "tweet.likes_changed",
+                "tweet": event["payload"],
+            }
+        )

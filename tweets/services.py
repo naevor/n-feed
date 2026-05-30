@@ -1,11 +1,29 @@
 from django.db import transaction
 
 from .models import Tweet
-from .realtime import broadcast_tweet_created
+from .realtime import broadcast_tweet_created, broadcast_tweet_likes_changed
 
 
 def _broadcast_tweet_created_after_commit(tweet):
     transaction.on_commit(lambda: broadcast_tweet_created(tweet))
+
+
+def _broadcast_tweet_likes_changed_after_commit(*, tweet, actor_user_id, liked):
+    tweet_id = tweet.id
+
+    def broadcast():
+        tweet = Tweet.objects.filter(pk=tweet_id).first()
+        if tweet is None:
+            return
+        likes_count = tweet.likes.count()
+        broadcast_tweet_likes_changed(
+            tweet_id=tweet_id,
+            likes_count=likes_count,
+            actor_user_id=actor_user_id,
+            liked=liked,
+        )
+
+    transaction.on_commit(broadcast)
 
 
 def create_tweet(*, user, form=None, content=None, media=None):
@@ -45,8 +63,18 @@ def delete_tweet_by_user(*, user, tweet):
 def toggle_like(*, user, tweet):
     if tweet.likes.filter(pk=user.pk).exists():
         tweet.likes.remove(user)
+        _broadcast_tweet_likes_changed_after_commit(
+            tweet=tweet,
+            actor_user_id=user.id,
+            liked=False,
+        )
         return False
     tweet.likes.add(user)
+    _broadcast_tweet_likes_changed_after_commit(
+        tweet=tweet,
+        actor_user_id=user.id,
+        liked=True,
+    )
     return True
 
 

@@ -1,14 +1,18 @@
 (() => {
     const container = document.querySelector("[data-feed-container]");
     const list = document.querySelector("[data-feed-list]");
-    if (!container || !list || !("WebSocket" in window)) {
+    const hasFeed = Boolean(container && list);
+    const hasTweetInteractions = Boolean(document.querySelector("[data-tweet-interaction]"));
+    if ((!hasFeed && !hasTweetInteractions) || !("WebSocket" in window)) {
         return;
     }
 
-    const emptyState = document.querySelector("[data-feed-empty]");
-    const defaultAvatarUrl = container.dataset.defaultAvatarUrl || "";
+    const emptyState = hasFeed ? document.querySelector("[data-feed-empty]") : null;
+    const defaultAvatarUrl = container?.dataset.defaultAvatarUrl || "";
     const seenTweetIds = new Set(
-        Array.from(list.querySelectorAll("[data-tweet-id]")).map((item) => item.dataset.tweetId)
+        hasFeed
+            ? Array.from(list.querySelectorAll("[data-tweet-id]")).map((item) => item.dataset.tweetId)
+            : []
     );
     const reconnectBaseDelayMs = 1000;
     const reconnectMaxDelayMs = 30000;
@@ -73,7 +77,7 @@
     };
 
     const insertTweet = (tweet) => {
-        if (!tweet?.id || seenTweetIds.has(String(tweet.id))) {
+        if (!hasFeed || !tweet?.id || seenTweetIds.has(String(tweet.id))) {
             return;
         }
 
@@ -95,6 +99,11 @@
 
         if (message.type === "tweet.created") {
             insertTweet(message.tweet);
+            return;
+        }
+
+        if (message.type === "tweet.likes_changed") {
+            window.nFeedUpdateTweetInteractions?.(message.tweet);
         }
     };
 
