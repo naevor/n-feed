@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -32,6 +33,34 @@ def _redirect_after_action(request):
     if next_url:
         return redirect(next_url)
     return redirect("tweets:all_tweets")
+
+
+def _wants_json(request):
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in (
+        request.headers.get("Accept") or ""
+    )
+
+
+def _tweet_action_payload(*, tweet, liked=None, bookmarked=None):
+    payload = {
+        "tweet_id": tweet.id,
+        "likes_count": tweet.likes.count(),
+    }
+    if liked is not None:
+        payload.update(
+            {
+                "liked": liked,
+                "like_label": "Unlike" if liked else "Like",
+            }
+        )
+    if bookmarked is not None:
+        payload.update(
+            {
+                "bookmarked": bookmarked,
+                "bookmark_label": "Remove Bookmark" if bookmarked else "Add Bookmark",
+            }
+        )
+    return payload
 
 
 def all_tweets(request):
@@ -76,7 +105,11 @@ def sub_tweets(request):
 @require_POST
 def toggle_bookmark(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
-    services.toggle_bookmark(user=request.user, tweet=tweet)
+    bookmarked = services.toggle_bookmark(user=request.user, tweet=tweet)
+    if _wants_json(request):
+        return JsonResponse(
+            _tweet_action_payload(tweet=tweet, bookmarked=bookmarked)
+        )
     return _redirect_after_action(request)
 
 
@@ -143,7 +176,9 @@ def delete_tweet(request, tweet_id):
 @require_POST
 def like_tweet(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
-    services.toggle_like(user=request.user, tweet=tweet)
+    liked = services.toggle_like(user=request.user, tweet=tweet)
+    if _wants_json(request):
+        return JsonResponse(_tweet_action_payload(tweet=tweet, liked=liked))
     return _redirect_after_action(request)
 
 
