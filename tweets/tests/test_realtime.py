@@ -10,7 +10,7 @@ from django.test import TransactionTestCase, override_settings
 from tweets.consumers import FeedConsumer
 from tweets.models import Tweet
 from tweets.realtime import feed_group_name, tweet_payload
-from tweets.services import create_tweet
+from tweets.services import create_tweet, toggle_like
 
 User = get_user_model()
 
@@ -40,6 +40,31 @@ class TweetRealtimeTests(TransactionTestCase):
         self.assertEqual(message["tweet"]["content"], "live tweet")
         self.assertEqual(message["tweet"]["user"]["username"], "author")
 
+    def test_feed_websocket_receives_likes_changed(self):
+        tweet = Tweet.objects.create(user=self.user, content="live tweet")
+        message = async_to_sync(self._send_feed_event)(
+            {
+                "type": "tweet.likes_changed",
+                "payload": {
+                    "tweet_id": tweet.id,
+                    "likes_count": 3,
+                    "actor_user_id": self.user.id,
+                    "liked": True,
+                },
+            }
+        )
+
+        self.assertEqual(message["type"], "tweet.likes_changed")
+        self.assertEqual(
+            message["tweet"],
+            {
+                "tweet_id": tweet.id,
+                "likes_count": 3,
+                "actor_user_id": self.user.id,
+                "liked": True,
+            },
+        )
+
     def test_create_tweet_broadcasts_after_commit(self):
         with patch("tweets.services.broadcast_tweet_created") as broadcast:
             with transaction.atomic():
@@ -47,6 +72,23 @@ class TweetRealtimeTests(TransactionTestCase):
                 broadcast.assert_not_called()
 
         broadcast.assert_called_once_with(tweet)
+
+    def test_toggle_like_broadcasts_after_commit(self):
+        liker = User.objects.create_user(username="liker", password="testpass123")
+        tweet = Tweet.objects.create(user=self.user, content="liked through service")
+
+        with patch("tweets.services.broadcast_tweet_likes_changed") as broadcast:
+            with transaction.atomic():
+                liked = toggle_like(user=liker, tweet=tweet)
+                broadcast.assert_not_called()
+
+        self.assertTrue(liked)
+        broadcast.assert_called_once_with(
+            tweet_id=tweet.id,
+            likes_count=1,
+            actor_user_id=liker.id,
+            liked=True,
+        )
 
     async def _send_feed_event(self, event):
         communicator = WebsocketCommunicator(

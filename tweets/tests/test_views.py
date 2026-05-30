@@ -74,6 +74,23 @@ class TweetViewTests(TestCase):
         self.assertContains(response, "data-feed-list")
         self.assertContains(response, "feed.js")
 
+    def test_authenticated_feed_loads_async_interactions_client(self):
+        self.client.login(username="author", password="testpass123")
+        response = self.client.get(reverse("tweets:all_tweets"))
+
+        self.assertContains(response, 'data-tweet-interaction="like"')
+        self.assertContains(response, 'data-tweet-interaction="bookmark"')
+        self.assertContains(response, f'data-current-user-id="{self.user.id}"')
+        self.assertContains(response, "interactions.js")
+
+    def test_tweet_detail_loads_interactions_and_realtime_clients(self):
+        self.client.login(username="author", password="testpass123")
+        response = self.client.get(reverse("tweets:tweet_detail", args=[self.tweet.slug]))
+
+        self.assertContains(response, 'data-tweet-id="')
+        self.assertContains(response, "interactions.js")
+        self.assertContains(response, "feed.js")
+
     def test_bookmark_requires_post(self):
         self.client.login(username="author", password="testpass123")
         response = self.client.get(reverse("tweets:toggle_bookmark", args=[self.tweet.id]))
@@ -93,6 +110,26 @@ class TweetViewTests(TestCase):
         )
         self.assertRedirects(response, next_url)
 
+    def test_like_returns_json_for_async_request(self):
+        self.client.login(username="author", password="testpass123")
+
+        response = self.client.post(
+            reverse("tweets:like_tweet", args=[self.tweet.id]),
+            HTTP_ACCEPT="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "tweet_id": self.tweet.id,
+                "likes_count": 1,
+                "liked": True,
+                "like_label": "Unlike",
+            },
+        )
+
     def test_bookmark_redirects_back_to_next_url(self):
         self.client.login(username="author", password="testpass123")
         next_url = reverse("users:profile", args=["author"])
@@ -101,6 +138,26 @@ class TweetViewTests(TestCase):
             {"next": next_url},
         )
         self.assertRedirects(response, next_url)
+
+    def test_bookmark_returns_json_for_async_request(self):
+        self.client.login(username="author", password="testpass123")
+
+        response = self.client.post(
+            reverse("tweets:toggle_bookmark", args=[self.tweet.id]),
+            HTTP_ACCEPT="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "tweet_id": self.tweet.id,
+                "likes_count": 0,
+                "bookmarked": True,
+                "bookmark_label": "Remove Bookmark",
+            },
+        )
 
     def test_edit_tweet_redirects_back_to_next_url(self):
         self.client.login(username="author", password="testpass123")
