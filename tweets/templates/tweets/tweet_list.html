@@ -68,19 +68,32 @@
                     <div class="tweet-actions">
                         <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
                         {% if user.is_authenticated %}
-                            <form method="post" action="{% url 'tweets:like_tweet' tweet.id %}">
+                            <form
+                                method="post"
+                                action="{% url 'tweets:like_tweet' tweet.id %}"
+                                data-tweet-interaction="like"
+                                data-tweet-id="{{ tweet.id }}"
+                                data-current-user-id="{{ user.id }}"
+                            >
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button type="submit" class="btn btn-secondary">
-                                    {{ tweet.likes_count }} {% if tweet.is_liked %}Unlike{% else %}Like{% endif %}
+                                <button type="submit" class="btn btn-secondary" data-like-button>
+                                    <span data-like-count>{{ tweet.likes_count }}</span>
+                                    <span data-like-label>{% if tweet.is_liked %}Unlike{% else %}Like{% endif %}</span>
                                 </button>
                             </form>
 
-                            <form method="post" action="{% url 'tweets:toggle_bookmark' tweet.id %}">
+                            <form
+                                method="post"
+                                action="{% url 'tweets:toggle_bookmark' tweet.id %}"
+                                data-tweet-interaction="bookmark"
+                                data-tweet-id="{{ tweet.id }}"
+                                data-current-user-id="{{ user.id }}"
+                            >
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button type="submit" class="btn btn-secondary">
-                                    {% if tweet.is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}
+                                <button type="submit" class="btn btn-secondary" data-bookmark-button>
+                                    <span data-bookmark-label>{% if tweet.is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}</span>
                                 </button>
                             </form>
                         {% else %}
@@ -120,5 +133,8 @@
         <p class="muted">Once someone posts, the feed will appear here.</p>
     </div>
 </div>
+{% if user.is_authenticated %}
+    <script src="{% static 'interactions.js' %}" defer></script>
+{% endif %}
 <script src="{% static 'feed.js' %}" defer></script>
 {% endblock %}
