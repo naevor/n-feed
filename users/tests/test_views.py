@@ -100,6 +100,39 @@ class UserViewTests(TestCase):
         self.client.post(reverse("users:follow", args=["bob"]))
         self.assertNotIn(self.other, self.user.following.all())
 
+    def test_follow_toggle_returns_json_for_async_request(self):
+        self.client.login(username="alice", password="testpass123")
+
+        response = self.client.post(
+            reverse("users:follow", args=["bob"]),
+            HTTP_ACCEPT="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "actor_user_id": self.user.id,
+                "actor_following_count": 1,
+                "target_user_id": self.other.id,
+                "target_username": "bob",
+                "followers_count": 1,
+                "following": True,
+                "follow_label": "Unfollow",
+            },
+        )
+
+    def test_other_profile_loads_async_follow_controls(self):
+        self.client.login(username="alice", password="testpass123")
+
+        response = self.client.get(reverse("users:profile", args=["bob"]))
+
+        self.assertContains(response, "data-follow-form")
+        self.assertContains(response, f'data-follow-target-id="{self.other.id}"')
+        self.assertContains(response, "data-followers-count")
+        self.assertContains(response, "social.js")
+
     def test_follow_self_is_noop(self):
         self.client.login(username="alice", password="testpass123")
         self.client.post(reverse("users:follow", args=["alice"]))

@@ -88,6 +88,8 @@ class TweetViewTests(TestCase):
         response = self.client.get(reverse("tweets:tweet_detail", args=[self.tweet.slug]))
 
         self.assertContains(response, 'data-tweet-id="')
+        self.assertContains(response, "data-comment-list")
+        self.assertContains(response, "data-comment-form")
         self.assertContains(response, "interactions.js")
         self.assertContains(response, "feed.js")
 
@@ -158,6 +160,35 @@ class TweetViewTests(TestCase):
                 "bookmark_label": "Remove Bookmark",
             },
         )
+
+    def test_tweet_detail_returns_json_for_async_comment(self):
+        self.client.login(username="author", password="testpass123")
+
+        response = self.client.post(
+            reverse("tweets:tweet_detail", args=[self.tweet.slug]),
+            {"content": "async comment #tag"},
+            HTTP_ACCEPT="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()["comment"]
+        self.assertEqual(payload["tweet_id"], self.tweet.id)
+        self.assertEqual(payload["content"], "async comment #tag")
+        self.assertIn('href="/tags/tag/"', payload["content_html"])
+
+    def test_invalid_async_comment_returns_errors(self):
+        self.client.login(username="author", password="testpass123")
+
+        response = self.client.post(
+            reverse("tweets:tweet_detail", args=[self.tweet.slug]),
+            {"content": "x" * 151},
+            HTTP_ACCEPT="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("errors", response.json())
 
     def test_edit_tweet_redirects_back_to_next_url(self):
         self.client.login(username="author", password="testpass123")

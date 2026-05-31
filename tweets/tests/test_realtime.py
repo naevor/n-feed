@@ -8,9 +8,10 @@ from django.db import transaction
 from django.test import TransactionTestCase, override_settings
 
 from tweets.consumers import FeedConsumer
+from tweets.forms import CommentForm
 from tweets.models import Tweet
-from tweets.realtime import feed_group_name, tweet_payload
-from tweets.services import create_tweet, toggle_like
+from tweets.realtime import comment_payload, feed_group_name, tweet_payload
+from tweets.services import add_comment, create_tweet, toggle_like
 
 User = get_user_model()
 
@@ -65,6 +66,24 @@ class TweetRealtimeTests(TransactionTestCase):
             },
         )
 
+    def test_feed_websocket_receives_comment_created(self):
+        tweet = Tweet.objects.create(user=self.user, content="live tweet")
+        form = CommentForm({"content": "live comment"})
+        self.assertTrue(form.is_valid())
+        comment = add_comment(user=self.user, tweet=tweet, form=form)
+
+        message = async_to_sync(self._send_feed_event)(
+            {
+                "type": "tweet.comment_created",
+                "payload": comment_payload(comment),
+            }
+        )
+
+        self.assertEqual(message["type"], "tweet.comment_created")
+        self.assertEqual(message["comment"]["tweet_id"], tweet.id)
+        self.assertEqual(message["comment"]["content"], "live comment")
+        self.assertIn("content_html", message["comment"])
+
     def test_create_tweet_broadcasts_after_commit(self):
         with patch("tweets.services.broadcast_tweet_created") as broadcast:
             with transaction.atomic():
@@ -89,6 +108,18 @@ class TweetRealtimeTests(TransactionTestCase):
             actor_user_id=liker.id,
             liked=True,
         )
+
+    def test_add_comment_broadcasts_after_commit(self):
+        tweet = Tweet.objects.create(user=self.user, content="comment target")
+        form = CommentForm({"content": "created through service"})
+        self.assertTrue(form.is_valid())
+
+        with patch("tweets.services.broadcast_comment_created") as broadcast:
+            with transaction.atomic():
+                comment = add_comment(user=self.user, tweet=tweet, form=form)
+                broadcast.assert_not_called()
+
+        broadcast.assert_called_once_with(comment)
 
     async def _send_feed_event(self, event):
         communicator = WebsocketCommunicator(
