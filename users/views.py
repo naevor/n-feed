@@ -1,5 +1,6 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -20,6 +21,27 @@ def _redirect_after_action(request, *, fallback_username):
     ):
         return redirect(next_url)
     return redirect("users:profile", username=fallback_username)
+
+
+def _wants_json(request):
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in (
+        request.headers.get("Accept") or ""
+    )
+
+
+def _follow_payload(*, actor, target, following):
+    user_model = type(target)
+    actor = user_model.objects.get(pk=actor.pk)
+    target = user_model.objects.get(pk=target.pk)
+    return {
+        "actor_user_id": actor.id,
+        "actor_following_count": actor.following.count(),
+        "target_user_id": target.id,
+        "target_username": target.username,
+        "followers_count": target.followers.count(),
+        "following": following is True,
+        "follow_label": "Unfollow" if following is True else "Follow",
+    }
 
 
 def register_view(request):
@@ -91,7 +113,9 @@ def logout_view(request):
 @require_POST
 def follow_user_view(request, username):
     target = get_user_by_username(username=username)
-    services.follow_toggle(actor=request.user, target=target)
+    following = services.follow_toggle(actor=request.user, target=target)
+    if _wants_json(request):
+        return JsonResponse(_follow_payload(actor=request.user, target=target, following=following))
     return _redirect_after_action(request, fallback_username=username)
 
 

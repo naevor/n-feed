@@ -107,10 +107,19 @@
                                         </a>
                                         <span>Suggested</span>
                                     </div>
-                                    <form method="post" action="{% url 'users:follow' suggested_user.username %}" class="inline-form">
+                                    <form
+                                        method="post"
+                                        action="{% url 'users:follow' suggested_user.username %}"
+                                        class="inline-form"
+                                        data-follow-form
+                                        data-follow-target-id="{{ suggested_user.id }}"
+                                        data-current-user-id="{{ user.id }}"
+                                    >
                                         {% csrf_token %}
                                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                        <button type="submit" class="btn btn-secondary btn-small">Follow</button>
+                                        <button type="submit" class="btn btn-secondary btn-small">
+                                            <span data-follow-label>Follow</span>
+                                        </button>
                                     </form>
                                 </li>
                             {% endfor %}
@@ -122,6 +131,7 @@
     </div>
     {% if user.is_authenticated %}
         <div class="toast-stack" data-toast-stack></div>
+        <script src="{% static 'social.js' %}" defer></script>
         <script src="{% static 'notifications.js' %}" defer></script>
     {% endif %}
 </body>

@@ -5,7 +5,7 @@
 {% block title %}Profile of {{ profile_user.username }}{% endblock %}
 
 {% block content %}
-<div class="profile-container profile-hero">
+<div class="profile-container profile-hero" data-profile-user-id="{{ profile_user.id }}">
     <div class="profile-heading">
         <div>
             <p class="eyebrow">Profile</p>
@@ -27,11 +27,11 @@
             <p class="profile-meta"><strong>About</strong><span>{{ profile_user.bio|default:"No bio yet." }}</span></p>
             <div class="profile-stats">
                 <a href="{% url 'users:followers_list' profile_user.username %}" class="stat-card">
-                    <strong>{{ followers_count }}</strong>
+                    <strong data-followers-count>{{ followers_count }}</strong>
                     <span>Followers</span>
                 </a>
                 <a href="{% url 'users:following_list' profile_user.username %}" class="stat-card">
-                    <strong>{{ following_count }}</strong>
+                    <strong data-following-count>{{ following_count }}</strong>
                     <span>Following</span>
                 </a>
             </div>
@@ -49,10 +49,16 @@
     </div>
     {% elif request.user.is_authenticated %}
     <div class="profile-follow">
-        <form method="post" action="{% url 'users:follow' profile_user.username %}">
+        <form
+            method="post"
+            action="{% url 'users:follow' profile_user.username %}"
+            data-follow-form
+            data-follow-target-id="{{ profile_user.id }}"
+            data-current-user-id="{{ request.user.id }}"
+        >
             {% csrf_token %}
             <button type="submit" class="btn">
-                {% if is_following %}Unfollow{% else %}Follow{% endif %}
+                <span data-follow-label>{% if is_following %}Unfollow{% else %}Follow{% endif %}</span>
             </button>
         </form>
     </div>
