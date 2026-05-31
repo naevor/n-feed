@@ -74,9 +74,9 @@
 </article>
 
 <h2 class="section-title">Comments</h2>
-<ul class="comment-list">
+<ul class="comment-list" data-comment-list data-tweet-id="{{ tweet.id }}">
     {% for comment in comments %}
-        <li class="comment-card">
+        <li class="comment-card" data-comment-id="{{ comment.id }}">
             <div class="comment-header">
                 <strong>{{ comment.user.username }}</strong>
                 <span>{{ comment.created_at }}</span>
@@ -84,15 +84,22 @@
             <p>{{ comment.content|format_tweet }}</p>
         </li>
     {% empty %}
-        <li class="empty-state">No comments yet.</li>
+        <li class="empty-state" data-comment-empty>No comments yet.</li>
     {% endfor %}
 </ul>
 
 {% if user.is_authenticated %}
-    <form method="post" class="comment-form form-panel">
+    <form
+        method="post"
+        action="{% url 'tweets:tweet_detail' tweet.slug %}"
+        class="comment-form form-panel"
+        data-comment-form
+        data-tweet-id="{{ tweet.id }}"
+    >
         <h3>Add comment</h3>
         {% csrf_token %}
         {{ form.as_p }}
+        <p class="form-error" data-comment-error hidden></p>
         <button type="submit" class="btn">Comment</button>
     </form>
 {% else %}

@@ -7,6 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
+from tags.templatetags.tweet_formatting import format_tweet
+
 FEED_GROUP_NAME = "feed_updates"
 
 
@@ -33,6 +35,23 @@ def tweet_payload(tweet):
     return json.loads(json.dumps(data, cls=DjangoJSONEncoder))
 
 
+def comment_payload(comment):
+    created_at = timezone.localtime(comment.created_at)
+    data = {
+        "id": comment.id,
+        "tweet_id": comment.tweet_id,
+        "content": comment.content,
+        "content_html": str(format_tweet(comment.content)),
+        "created_at": date_format(created_at, "DATETIME_FORMAT"),
+        "user": {
+            "id": comment.user_id,
+            "username": comment.user.username,
+            "profile_url": reverse("users:profile", args=[comment.user.username]),
+        },
+    }
+    return json.loads(json.dumps(data, cls=DjangoJSONEncoder))
+
+
 def broadcast_tweet_created(tweet):
     channel_layer = get_channel_layer()
     if channel_layer is None:
@@ -43,6 +62,21 @@ def broadcast_tweet_created(tweet):
         {
             "type": "tweet.created",
             "payload": tweet_payload(tweet),
+        },
+    )
+    return True
+
+
+def broadcast_comment_created(comment):
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return False
+
+    async_to_sync(channel_layer.group_send)(
+        feed_group_name(),
+        {
+            "type": "tweet.comment_created",
+            "payload": comment_payload(comment),
         },
     )
     return True

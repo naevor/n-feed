@@ -104,6 +104,11 @@
 
         if (message.type === "tweet.likes_changed") {
             window.nFeedUpdateTweetInteractions?.(message.tweet);
+            return;
+        }
+
+        if (message.type === "tweet.comment_created") {
+            window.nFeedInsertComment?.(message.comment);
         }
     };
 

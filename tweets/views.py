@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from . import services
 from .forms import CommentForm, TweetForm
 from .models import Tweet
+from .realtime import comment_payload
 from .selectors import bookmarks_qs, feed_qs, subscriptions_feed_qs, tweet_with_comments
 
 PAGE_SIZE = 20
@@ -128,8 +129,12 @@ def tweet_detail(request, slug):
             return redirect_to_login(request.get_full_path())
         form = CommentForm(request.POST)
         if form.is_valid():
-            services.add_comment(user=request.user, tweet=tweet, form=form)
+            comment = services.add_comment(user=request.user, tweet=tweet, form=form)
+            if _wants_json(request):
+                return JsonResponse({"comment": comment_payload(comment)})
             return redirect("tweets:tweet_detail", slug=slug)
+        if _wants_json(request):
+            return JsonResponse({"errors": form.errors}, status=400)
     else:
         form = CommentForm()
 
@@ -188,5 +193,9 @@ def add_comment(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id)
     form = CommentForm(request.POST)
     if form.is_valid():
-        services.add_comment(user=request.user, tweet=tweet, form=form)
+        comment = services.add_comment(user=request.user, tweet=tweet, form=form)
+        if _wants_json(request):
+            return JsonResponse({"comment": comment_payload(comment)})
+    elif _wants_json(request):
+        return JsonResponse({"errors": form.errors}, status=400)
     return redirect("tweets:all_tweets")

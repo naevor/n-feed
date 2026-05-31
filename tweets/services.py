@@ -1,7 +1,11 @@
 from django.db import transaction
 
 from .models import Tweet
-from .realtime import broadcast_tweet_created, broadcast_tweet_likes_changed
+from .realtime import (
+    broadcast_comment_created,
+    broadcast_tweet_created,
+    broadcast_tweet_likes_changed,
+)
 
 
 def _broadcast_tweet_created_after_commit(tweet):
@@ -24,6 +28,10 @@ def _broadcast_tweet_likes_changed_after_commit(*, tweet, actor_user_id, liked):
         )
 
     transaction.on_commit(broadcast)
+
+
+def _broadcast_comment_created_after_commit(comment):
+    transaction.on_commit(lambda: broadcast_comment_created(comment))
 
 
 def create_tweet(*, user, form=None, content=None, media=None):
@@ -91,4 +99,5 @@ def add_comment(*, user, tweet, form):
     comment.user = user
     comment.tweet = tweet
     comment.save()
+    _broadcast_comment_created_after_commit(comment)
     return comment
