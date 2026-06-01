@@ -5,6 +5,14 @@ from .selectors import suggested_users_cache_key
 from .tasks import send_welcome_email
 
 
+def _cache_delete(key):
+    try:
+        cache.delete(key)
+    except Exception:
+        return False
+    return True
+
+
 def create_user(*, form):
     user = form.save()
     transaction.on_commit(lambda: send_welcome_email.delay(user_id=user.id))
@@ -16,10 +24,10 @@ def follow_toggle(*, actor, target):
         return None
     if target in actor.following.all():
         actor.following.remove(target)
-        cache.delete(suggested_users_cache_key(actor.pk))
+        _cache_delete(suggested_users_cache_key(actor.pk))
         return False
     actor.following.add(target)
-    cache.delete(suggested_users_cache_key(actor.pk))
+    _cache_delete(suggested_users_cache_key(actor.pk))
     return True
 
 

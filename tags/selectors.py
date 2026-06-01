@@ -13,8 +13,23 @@ TRENDING_TAGS_TTL_SECONDS = 300
 TRENDING_TAGS_CACHE_LIMIT = 50
 
 
+def _cache_get(key):
+    try:
+        return cache.get(key)
+    except Exception:
+        return None
+
+
+def _cache_set(key, value, timeout):
+    try:
+        cache.set(key, value, timeout)
+    except Exception:
+        return False
+    return True
+
+
 def trending_tags(*, limit=10):
-    cached = cache.get(TRENDING_TAGS_CACHE_KEY)
+    cached = _cache_get(TRENDING_TAGS_CACHE_KEY)
     if cached is not None:
         return cached[:limit]
 
@@ -31,7 +46,7 @@ def trending_tags(*, limit=10):
         .order_by("-tweet_count", "name")[:TRENDING_TAGS_CACHE_LIMIT]
     )
     result = [{"name": tag.name, "tweet_count": tag.tweet_count} for tag in tags]
-    cache.set(TRENDING_TAGS_CACHE_KEY, result, TRENDING_TAGS_TTL_SECONDS)
+    _cache_set(TRENDING_TAGS_CACHE_KEY, result, TRENDING_TAGS_TTL_SECONDS)
     return result
 
 

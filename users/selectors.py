@@ -13,6 +13,21 @@ def suggested_users_cache_key(user_id):
     return f"suggested_users:{user_id}:{SUGGESTED_USERS_CACHE_VERSION}"
 
 
+def _cache_get(key):
+    try:
+        return cache.get(key)
+    except Exception:
+        return None
+
+
+def _cache_set(key, value, timeout):
+    try:
+        cache.set(key, value, timeout)
+    except Exception:
+        return False
+    return True
+
+
 def get_user_by_username(*, username):
     return get_object_or_404(
         CustomUser.objects.prefetch_related("followers", "following"),
@@ -25,7 +40,7 @@ def suggested_users(*, user, limit=5):
         return CustomUser.objects.none()
 
     cache_key = suggested_users_cache_key(user.pk)
-    suggested_ids = cache.get(cache_key)
+    suggested_ids = _cache_get(cache_key)
     if suggested_ids is None:
         following_ids = list(user.following.values_list("id", flat=True))
         if following_ids:
@@ -45,7 +60,7 @@ def suggested_users(*, user, limit=5):
             )
         else:
             suggested_ids = []
-        cache.set(cache_key, suggested_ids, SUGGESTED_USERS_CACHE_TTL_SECONDS)
+        _cache_set(cache_key, suggested_ids, SUGGESTED_USERS_CACHE_TTL_SECONDS)
 
     selected_ids = suggested_ids[:limit]
     if not selected_ids:
