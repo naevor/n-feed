@@ -39,6 +39,16 @@ class NotificationViewTests(TestCase):
         self.assertContains(response, "liked your tweet")
         self.assertNotContains(response, "followed you")
 
+    def test_notification_list_exposes_async_controls(self):
+        self.client.login(username="recipient", password="testpass123")
+
+        response = self.client.get(reverse("notifications:list"))
+
+        self.assertContains(response, "data-notification-list")
+        self.assertContains(response, f'data-notification-id="{self.notification.id}"')
+        self.assertContains(response, 'data-notification-action="mark-read"')
+        self.assertContains(response, 'data-notification-action="mark-all-read"')
+
     def test_mark_read_marks_only_owned_notification(self):
         self.client.login(username="recipient", password="testpass123")
 
@@ -47,6 +57,43 @@ class NotificationViewTests(TestCase):
         self.assertRedirects(response, reverse("notifications:list"))
         self.notification.refresh_from_db()
         self.assertTrue(self.notification.is_read)
+
+    def test_mark_read_returns_json_for_async_request(self):
+        self.client.login(username="recipient", password="testpass123")
+
+        response = self.client.post(
+            reverse("notifications:mark_read", args=[self.notification.id]),
+            HTTP_ACCEPT="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "notification_id": self.notification.id,
+                "is_read": True,
+                "unread_count": 0,
+            },
+        )
+
+    def test_mark_all_read_returns_json_for_async_request(self):
+        Notification.objects.create(
+            recipient=self.recipient,
+            actor=self.actor,
+            kind=Notification.Kind.COMMENT,
+            tweet=self.tweet,
+        )
+        self.client.login(username="recipient", password="testpass123")
+
+        response = self.client.post(
+            reverse("notifications:mark_all_read"),
+            HTTP_ACCEPT="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"marked_count": 2, "unread_count": 0})
 
     def test_context_processor_exposes_unread_count(self):
         self.client.login(username="recipient", password="testpass123")

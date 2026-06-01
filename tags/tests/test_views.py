@@ -1,8 +1,11 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 
+from tags.selectors import trending_tags
 from tweets.models import Tweet
 
 User = get_user_model()
@@ -30,3 +33,14 @@ class TagViewTests(TestCase):
 
         self.assertContains(response, "Trends")
         self.assertContains(response, "#django")
+
+    def test_trending_tags_falls_back_when_cache_is_unavailable(self):
+        Tweet.objects.create(user=self.user, content="matched #Django")
+
+        with (
+            patch("tags.selectors.cache.get", side_effect=Exception("cache down")),
+            patch("tags.selectors.cache.set", side_effect=Exception("cache down")),
+        ):
+            result = trending_tags()
+
+        self.assertEqual(result, [{"name": "django", "tweet_count": 1}])
