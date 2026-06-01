@@ -9,19 +9,25 @@
         <h1>Notifications</h1>
     </div>
 
-{% if page.object_list %}
-    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+    <form
+        method="post"
+        action="{% url 'notifications:mark_all_read' %}"
+        data-notification-action="mark-all-read"
+        {% if not page.object_list %}hidden{% endif %}
+    >
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
         <button type="submit" class="btn btn-secondary">Mark all read</button>
     </form>
-{% endif %}
 </header>
 
-{% if page.object_list %}
-    <ul class="notification-list">
+<ul class="notification-list" data-notification-list {% if not page.object_list %}hidden{% endif %}>
+    {% if page.object_list %}
         {% for notification in page %}
-            <li class="notification-card {% if not notification.is_read %}unread{% endif %}">
+            <li
+                class="notification-card {% if not notification.is_read %}unread{% endif %}"
+                data-notification-id="{{ notification.id }}"
+            >
                 <div class="notification-body">
                     <a href="{% url 'users:profile' notification.actor.username %}">
                         {{ notification.actor.username }}
@@ -48,7 +54,12 @@
                 </div>
 
                 {% if not notification.is_read %}
-                    <form method="post" action="{% url 'notifications:mark_read' notification.id %}" class="notification-action">
+                    <form
+                        method="post"
+                        action="{% url 'notifications:mark_read' notification.id %}"
+                        class="notification-action"
+                        data-notification-action="mark-read"
+                    >
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <button type="submit" class="btn">Mark read</button>
@@ -56,8 +67,10 @@
                 {% endif %}
             </li>
         {% endfor %}
-    </ul>
+    {% endif %}
+</ul>
 
+{% if page.object_list %}
     {% if page.has_previous or page.has_next %}
         <div class="pagination">
             {% if page.has_previous %}
@@ -69,10 +82,10 @@
             {% endif %}
         </div>
     {% endif %}
-{% else %}
-    <div class="empty-state">
-        <h2>There are no notifications.</h2>
-        <p class="muted">Likes, follows, comments and mentions will appear here.</p>
-    </div>
 {% endif %}
+
+<div class="empty-state" data-notification-empty {% if page.object_list %}hidden{% endif %}>
+    <h2>There are no notifications.</h2>
+    <p class="muted">Likes, follows, comments and mentions will appear here.</p>
+</div>
 {% endblock %}
