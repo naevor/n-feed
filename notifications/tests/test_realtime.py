@@ -10,7 +10,12 @@ from django.test import TransactionTestCase, override_settings
 
 from notifications.consumers import NotificationConsumer
 from notifications.models import Notification
-from notifications.realtime import notification_group_name, notification_payload
+from notifications.realtime import (
+    broadcast_notification,
+    broadcast_unread_count,
+    notification_group_name,
+    notification_payload,
+)
 from notifications.services import create_notification, mark_all_read, mark_notification_read
 from tweets.models import Tweet
 
@@ -22,6 +27,11 @@ CHANNEL_TEST_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
+
+
+class BrokenChannelLayer:
+    async def group_send(self, *args, **kwargs):
+        raise RuntimeError("channel layer down")
 
 
 @override_settings(CHANNEL_LAYERS=CHANNEL_TEST_LAYERS)
@@ -157,6 +167,18 @@ class NotificationRealtimeTests(TransactionTestCase):
 
         self.assertEqual(message["type"], "notification.unread_count")
         self.assertEqual(message["unread_count"], 3)
+
+    def test_notification_broadcasts_return_false_when_channel_layer_fails(self):
+        notification = Notification.objects.create(
+            recipient=self.recipient,
+            actor=self.actor,
+            kind=Notification.Kind.LIKE,
+            tweet=self.tweet,
+        )
+
+        with patch("notifications.realtime.get_channel_layer", return_value=BrokenChannelLayer()):
+            self.assertFalse(broadcast_notification(notification))
+            self.assertFalse(broadcast_unread_count(user_id=self.recipient.id, unread_count=1))
 
     async def _send_notification_event(self, event):
         communicator = WebsocketCommunicator(

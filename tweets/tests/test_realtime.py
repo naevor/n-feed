@@ -10,7 +10,14 @@ from django.test import TransactionTestCase, override_settings
 from tweets.consumers import FeedConsumer
 from tweets.forms import CommentForm
 from tweets.models import Tweet
-from tweets.realtime import comment_payload, feed_group_name, tweet_payload
+from tweets.realtime import (
+    broadcast_comment_created,
+    broadcast_tweet_created,
+    broadcast_tweet_likes_changed,
+    comment_payload,
+    feed_group_name,
+    tweet_payload,
+)
 from tweets.services import add_comment, create_tweet, toggle_like
 
 User = get_user_model()
@@ -21,6 +28,11 @@ CHANNEL_TEST_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
+
+
+class BrokenChannelLayer:
+    async def group_send(self, *args, **kwargs):
+        raise RuntimeError("channel layer down")
 
 
 @override_settings(CHANNEL_LAYERS=CHANNEL_TEST_LAYERS)
@@ -120,6 +132,24 @@ class TweetRealtimeTests(TransactionTestCase):
                 broadcast.assert_not_called()
 
         broadcast.assert_called_once_with(comment)
+
+    def test_feed_broadcasts_return_false_when_channel_layer_fails(self):
+        tweet = Tweet.objects.create(user=self.user, content="channel outage")
+        form = CommentForm({"content": "comment during outage"})
+        self.assertTrue(form.is_valid())
+        comment = add_comment(user=self.user, tweet=tweet, form=form)
+
+        with patch("tweets.realtime.get_channel_layer", return_value=BrokenChannelLayer()):
+            self.assertFalse(broadcast_tweet_created(tweet))
+            self.assertFalse(broadcast_comment_created(comment))
+            self.assertFalse(
+                broadcast_tweet_likes_changed(
+                    tweet_id=tweet.id,
+                    likes_count=1,
+                    actor_user_id=self.user.id,
+                    liked=True,
+                )
+            )
 
     async def _send_feed_event(self, event):
         communicator = WebsocketCommunicator(
