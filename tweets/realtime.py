@@ -1,4 +1,5 @@
 import json
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -10,6 +11,7 @@ from django.utils.formats import date_format
 from tags.templatetags.tweet_formatting import format_tweet
 
 FEED_GROUP_NAME = "feed_updates"
+logger = logging.getLogger(__name__)
 
 
 def feed_group_name():
@@ -53,40 +55,26 @@ def comment_payload(comment):
 
 
 def broadcast_tweet_created(tweet):
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        return False
-
-    async_to_sync(channel_layer.group_send)(
+    return _group_send(
         feed_group_name(),
         {
             "type": "tweet.created",
             "payload": tweet_payload(tweet),
         },
     )
-    return True
 
 
 def broadcast_comment_created(comment):
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        return False
-
-    async_to_sync(channel_layer.group_send)(
+    return _group_send(
         feed_group_name(),
         {
             "type": "tweet.comment_created",
             "payload": comment_payload(comment),
         },
     )
-    return True
 
 
 def broadcast_tweet_likes_changed(*, tweet_id, likes_count, actor_user_id=None, liked=None):
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        return False
-
     payload = {
         "tweet_id": tweet_id,
         "likes_count": likes_count,
@@ -96,11 +84,23 @@ def broadcast_tweet_likes_changed(*, tweet_id, likes_count, actor_user_id=None, 
     if liked is not None:
         payload["liked"] = liked
 
-    async_to_sync(channel_layer.group_send)(
+    return _group_send(
         feed_group_name(),
         {
             "type": "tweet.likes_changed",
             "payload": payload,
         },
     )
+
+
+def _group_send(group_name, event):
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return False
+
+    try:
+        async_to_sync(channel_layer.group_send)(group_name, event)
+    except Exception:
+        logger.exception("Failed to broadcast feed event to %s", group_name)
+        return False
     return True
