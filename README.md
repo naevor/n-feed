@@ -68,6 +68,7 @@ Useful endpoints:
 
 - `GET /healthz/`
 - `GET /readyz/`
+- `GET /celeryz/`
 - `GET /api/docs/`
 - `GET /api/redoc/`
 - `GET /api/v1/tweets/`
@@ -100,7 +101,7 @@ Required production steps:
 5. Start Daphne, one Celery worker, and Celery beat.
 6. Point the load balancer health check at `/readyz/`.
 
-`/healthz/` only confirms that Django can return a response. `/readyz/` checks the database and cache, so it is the endpoint to use before sending traffic to a container.
+`/healthz/` only confirms that Django can return a response. `/readyz/` checks the database, cache, and Channels layer, so it is the endpoint to use before sending traffic to a web container. `/celeryz/` checks Celery worker visibility separately; it is intentionally not part of web readiness to avoid startup dependency cycles.
 
 ## Checks
 

@@ -17,6 +17,11 @@ services:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   web:
     build: .
@@ -24,7 +29,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     environment:
       DJANGO_ENV: prod
       DJANGO_SECRET_KEY: ${COMPOSE_DJANGO_SECRET_KEY:-unsafe-compose-secret-change-me}
@@ -61,7 +66,7 @@ services:
       web:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     environment:
       DJANGO_ENV: prod
       DJANGO_SECRET_KEY: ${COMPOSE_DJANGO_SECRET_KEY:-unsafe-compose-secret-change-me}
@@ -83,6 +88,11 @@ services:
     volumes:
       - media:/app/media
     command: celery -A twitmain worker -l info
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A twitmain inspect ping --timeout=5 | grep -q pong"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
 
   celery-beat:
     build: .
@@ -90,7 +100,7 @@ services:
       web:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     environment:
       DJANGO_ENV: prod
       DJANGO_SECRET_KEY: ${COMPOSE_DJANGO_SECRET_KEY:-unsafe-compose-secret-change-me}
@@ -112,6 +122,11 @@ services:
     volumes:
       - media:/app/media
     command: celery -A twitmain beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    healthcheck:
+      test: ["CMD-SHELL", "python manage.py shell -c \"from django_celery_beat.models import PeriodicTask; PeriodicTask.objects.count() >= 0\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   nginx:
     image: nginx:alpine
@@ -123,6 +138,11 @@ services:
       - media:/media:ro
     ports:
       - "8000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost/healthz/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pg_data:

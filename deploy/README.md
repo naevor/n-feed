@@ -24,8 +24,11 @@ Use `/readyz/` for container readiness checks. It verifies:
 
 - database connection
 - configured Django cache backend
+- configured Channels layer
 
 Use `/healthz/` only as a lightweight process liveness check.
+
+Use `/celeryz/` to check Celery worker visibility. Keep it separate from web readiness checks so the web service can become healthy before worker containers start.
 
 ## Required Services
 
