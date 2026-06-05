@@ -72,6 +72,19 @@ class NotificationRealtimeTests(TransactionTestCase):
         self.assertEqual(message["notification"]["kind"], Notification.Kind.LIKE)
         self.assertEqual(message["notification"]["actor"]["username"], self.actor.username)
 
+    def test_authenticated_user_receives_initial_unread_count(self):
+        Notification.objects.create(
+            recipient=self.recipient,
+            actor=self.actor,
+            kind=Notification.Kind.LIKE,
+            tweet=self.tweet,
+        )
+
+        message = async_to_sync(self._connect_and_receive_initial_message)()
+
+        self.assertEqual(message["type"], "notification.unread_count")
+        self.assertEqual(message["unread_count"], 1)
+
     def test_create_notification_broadcasts_when_notification_is_new(self):
         with (
             patch("notifications.services.broadcast_notification") as broadcast_notification,
@@ -190,11 +203,27 @@ class NotificationRealtimeTests(TransactionTestCase):
         connected, _ = await communicator.connect()
         assert connected
 
+        await communicator.receive_json_from(timeout=1)
+
         channel_layer = get_channel_layer()
         await channel_layer.group_send(
             notification_group_name(self.recipient.id),
             event,
         )
+
+        message = await communicator.receive_json_from(timeout=1)
+        await communicator.disconnect()
+        return message
+
+    async def _connect_and_receive_initial_message(self):
+        communicator = WebsocketCommunicator(
+            NotificationConsumer.as_asgi(),
+            "/ws/notifications/",
+        )
+        communicator.scope["user"] = self.recipient
+
+        connected, _ = await communicator.connect()
+        assert connected
 
         message = await communicator.receive_json_from(timeout=1)
         await communicator.disconnect()
