@@ -4,11 +4,12 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from .views import healthz, readyz
+from .views import celeryz, healthz, readyz
 
 urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("readyz/", readyz, name="readyz"),
+    path("celeryz/", celeryz, name="celeryz"),
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),
     path("tags/", include("tags.urls")),
