@@ -1,4 +1,7 @@
 from django import forms
+from django.core.exceptions import ValidationError as DjangoValidationError
+
+from twitmain.uploads import validate_tweet_media_upload
 
 from .models import Comment, Tweet
 
@@ -18,6 +21,15 @@ class TweetForm(forms.ModelForm):
         if len(content) > 280:
             raise forms.ValidationError("Tweet cannot contain more than 280 characters.")
         return content
+
+    def clean_media(self):
+        media = self.cleaned_data.get("media")
+        if media:
+            try:
+                validate_tweet_media_upload(media)
+            except DjangoValidationError as exc:
+                raise forms.ValidationError(exc.messages) from exc
+        return media
 
 
 class CommentForm(forms.ModelForm):

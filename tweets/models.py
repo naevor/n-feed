@@ -1,9 +1,12 @@
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Index
 from django.utils.text import slugify
+
+from twitmain.uploads import validate_tweet_media_upload
 
 
 class Tweet(models.Model):
@@ -51,6 +54,14 @@ class Tweet(models.Model):
                 counter += 1
             self.slug = slug
         super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        if self.media:
+            try:
+                validate_tweet_media_upload(self.media)
+            except ValidationError as exc:
+                raise ValidationError({"media": exc.messages}) from exc
 
 
 class Comment(models.Model):

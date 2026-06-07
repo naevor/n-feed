@@ -1,5 +1,7 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from twitmain.uploads import validate_tweet_media_upload
 from users.serializers import UserMinSerializer
 
 from .models import Comment, Tweet
@@ -42,3 +44,10 @@ class TweetCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tweet
         fields = ["content", "media"]
+
+    def validate_media(self, media):
+        try:
+            validate_tweet_media_upload(media)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages) from exc
+        return media
