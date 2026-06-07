@@ -1,14 +1,36 @@
+import shutil
+import tempfile
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from tweets.models import Tweet
 
 User = get_user_model()
+TINY_GIF = (
+    b"GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00\xff\xff\xff,"
+    b"\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+)
 
 
 class ApiV1Tests(APITestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._media_root = tempfile.mkdtemp()
+        cls._media_override = override_settings(MEDIA_ROOT=cls._media_root)
+        cls._media_override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._media_override.disable()
+        shutil.rmtree(cls._media_root, ignore_errors=True)
+        super().tearDownClass()
+
     def setUp(self):
         cache.clear()
         self.user = User.objects.create_user(username="author", password="testpass123")
@@ -63,6 +85,20 @@ class ApiV1Tests(APITestCase):
         self.assertEqual(response.data["content"], "created via api")
         self.assertEqual(response.data["user"]["username"], "author")
 
+    def test_api_rejects_invalid_tweet_media(self):
+        self.authenticate()
+        media = SimpleUploadedFile("tweet.txt", b"not an image", content_type="text/plain")
+
+        response = self.client.post(
+            "/api/v1/tweets/",
+            {"content": "bad media", "media": media},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("media", response.data)
+        self.assertFalse(Tweet.objects.filter(content="bad media").exists())
+
     def test_owner_can_patch_tweet(self):
         self.authenticate()
 
@@ -112,6 +148,8 @@ class ApiV1Tests(APITestCase):
 
     def test_users_list_detail_and_follow(self):
         self.authenticate()
+        self.other.email = "other@example.com"
+        self.other.save(update_fields=["email"])
 
         list_response = self.client.get("/api/v1/users/")
         detail_response = self.client.get("/api/v1/users/other/")
@@ -119,9 +157,60 @@ class ApiV1Tests(APITestCase):
 
         self.assertEqual(list_response.status_code, status.HTTP_200_OK)
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertNotIn("email", detail_response.data)
         self.assertEqual(follow_response.status_code, status.HTTP_200_OK)
         self.assertTrue(follow_response.data["following"])
         self.assertIn(self.other, self.user.following.all())
+
+    def test_me_endpoint_requires_authentication(self):
+        response = self.client.get("/api/v1/users/me/")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_me_endpoint_returns_private_profile(self):
+        self.user.email = "author@example.com"
+        self.user.save(update_fields=["email"])
+        self.authenticate()
+
+        response = self.client.get("/api/v1/users/me/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["username"], "author")
+        self.assertEqual(response.data["email"], "author@example.com")
+
+    def test_me_endpoint_updates_profile(self):
+        self.authenticate()
+        avatar = SimpleUploadedFile("avatar.gif", TINY_GIF, content_type="image/gif")
+
+        response = self.client.patch(
+            "/api/v1/users/me/",
+            {
+                "email": "new@example.com",
+                "bio": "updated bio",
+                "avatar": avatar,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["email"], "new@example.com")
+        self.assertEqual(response.data["bio"], "updated bio")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "new@example.com")
+        self.assertTrue(self.user.avatar)
+
+    def test_me_endpoint_rejects_invalid_avatar(self):
+        self.authenticate()
+        avatar = SimpleUploadedFile("avatar.txt", b"not an image", content_type="text/plain")
+
+        response = self.client.patch(
+            "/api/v1/users/me/",
+            {"avatar": avatar},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("avatar", response.data)
 
     def test_user_suggestions_endpoint_returns_friends_of_friends(self):
         third = User.objects.create_user(username="third", password="testpass123")
