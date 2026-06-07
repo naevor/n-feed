@@ -1,4 +1,7 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+
+from twitmain.uploads import validate_avatar_upload
 
 from .models import CustomUser
 
@@ -19,6 +22,19 @@ class UserDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
+            "bio",
+            "avatar",
+            "followers_count",
+            "following_count",
+        ]
+        read_only_fields = fields
+
+
+class UserPrivateSerializer(UserDetailSerializer):
+    class Meta(UserDetailSerializer.Meta):
+        fields = [
+            "id",
+            "username",
             "email",
             "bio",
             "avatar",
@@ -26,6 +42,19 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "following_count",
         ]
         read_only_fields = fields
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ["email", "bio", "avatar"]
+
+    def validate_avatar(self, avatar):
+        try:
+            validate_avatar_upload(avatar)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages) from exc
+        return avatar
 
 
 UserSerializer = UserDetailSerializer
