@@ -23,4 +23,12 @@ class Command(BaseCommand):
                 "enabled": True,
             },
         )
+        PeriodicTask.objects.update_or_create(
+            name="cleanup orphan media",
+            defaults={
+                "crontab": schedule,
+                "task": "tweets.tasks.cleanup_orphan_media_task",
+                "enabled": True,
+            },
+        )
         self.stdout.write(self.style.SUCCESS("Configured periodic Celery tasks."))
