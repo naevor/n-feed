@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from django.conf import settings
@@ -11,6 +12,7 @@ ALLOWED_IMAGE_CONTENT_TYPES = {
     "image/webp",
 }
 ALLOWED_IMAGE_EXTENSIONS = {".gif", ".jpeg", ".jpg", ".png", ".webp"}
+logger = logging.getLogger(__name__)
 
 
 def validate_avatar_upload(file):
@@ -34,22 +36,18 @@ def validate_image_upload(file, *, max_size, label):
         return
 
     if file.size > max_size:
-        raise ValidationError(f"{label} cannot be larger than {_format_size(max_size)}.")
+        _reject_upload(label, f"{label} cannot be larger than {_format_size(max_size)}.")
 
     extension = Path(file.name or "").suffix.lower()
     if extension not in ALLOWED_IMAGE_EXTENSIONS:
-        raise ValidationError(
-            f"{label} must be an image file: GIF, JPEG, PNG, or WebP."
-        )
+        _reject_upload(label, f"{label} must be an image file: GIF, JPEG, PNG, or WebP.")
 
     content_type = getattr(file, "content_type", "")
     if content_type and content_type.lower() not in ALLOWED_IMAGE_CONTENT_TYPES:
-        raise ValidationError(
-            f"{label} must use a supported image content type."
-        )
+        _reject_upload(label, f"{label} must use a supported image content type.")
 
     if not _has_image_dimensions(file):
-        raise ValidationError(f"{label} must be a valid image.")
+        _reject_upload(label, f"{label} must be a valid image.")
 
 
 def _has_image_dimensions(file):
@@ -73,3 +71,8 @@ def _has_image_dimensions(file):
 
 def _format_size(size):
     return f"{size // (1024 * 1024)} MB"
+
+
+def _reject_upload(label, message):
+    logger.warning("Rejected upload: %s", message, extra={"upload_label": label})
+    raise ValidationError(message)
