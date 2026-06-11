@@ -77,6 +77,51 @@ Useful endpoints:
 - `WS /ws/notifications/`
 - `WS /ws/feed/`
 
+## API Examples
+
+Login and call authenticated endpoints:
+
+```powershell
+$base = "http://127.0.0.1:8000"
+$login = Invoke-RestMethod `
+  -Method Post `
+  -Uri "$base/api/v1/auth/login/" `
+  -ContentType "application/json" `
+  -Body (@{ username = "author"; password = "testpass123" } | ConvertTo-Json)
+$headers = @{ Authorization = "Bearer $($login.access)"; "X-Request-ID" = "manual-smoke-1" }
+Invoke-RestMethod "$base/api/v1/users/me/" -Headers $headers
+```
+
+Create a tweet, then toggle like/bookmark:
+
+```powershell
+$tweet = Invoke-RestMethod `
+  -Method Post `
+  -Uri "$base/api/v1/tweets/" `
+  -Headers $headers `
+  -ContentType "application/json" `
+  -Body (@{ content = "API smoke #django" } | ConvertTo-Json)
+Invoke-RestMethod -Method Post -Uri "$base/api/v1/tweets/$($tweet.slug)/like/" -Headers $headers
+Invoke-RestMethod -Method Post -Uri "$base/api/v1/tweets/$($tweet.slug)/bookmark/" -Headers $headers
+```
+
+Upload media through multipart form data:
+
+```powershell
+$form = @{
+  content = "tweet with media"
+  media = Get-Item ".\sample.gif"
+}
+Invoke-RestMethod -Method Post -Uri "$base/api/v1/tweets/" -Headers $headers -Form $form
+```
+
+Connect to realtime notifications from browser code after logging in through the web session:
+
+```javascript
+const socket = new WebSocket("ws://127.0.0.1:8000/ws/notifications/");
+socket.onmessage = (event) => console.log(JSON.parse(event.data));
+```
+
 Docker Compose starts the web process, a Celery worker, and Celery beat. The web container runs migrations and creates the default periodic task that removes old notifications.
 
 Uploads are intentionally limited: avatars accept GIF/JPEG/PNG/WebP up to 2 MB, and tweet media accepts the same image types up to 5 MB. Override `MAX_AVATAR_UPLOAD_SIZE` and `MAX_TWEET_MEDIA_UPLOAD_SIZE` through the environment if production limits need to differ.
