@@ -49,6 +49,8 @@ class NotificationApiTests(APITestCase):
 
         self.assertEqual(mark_one_response.status_code, status.HTTP_200_OK)
         self.assertEqual(mark_all_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(mark_one_response.data["status"], "read")
+        self.assertEqual(mark_all_response.data["status"], "read")
         self.assertTrue(mark_one_response.data["read"])
         self.assertEqual(mark_one_response.data["unread_count"], 1)
         self.assertEqual(mark_all_response.data["marked"], 1)
@@ -57,3 +59,13 @@ class NotificationApiTests(APITestCase):
         second.refresh_from_db()
         self.assertTrue(self.notification.is_read)
         self.assertTrue(second.is_read)
+
+    def test_user_cannot_mark_someone_elses_notification_read(self):
+        other = User.objects.create_user(username="other", password="testpass123")
+        self.client.force_authenticate(user=other)
+
+        response = self.client.post(f"/api/v1/notifications/{self.notification.id}/mark_read/")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.notification.refresh_from_db()
+        self.assertFalse(self.notification.is_read)

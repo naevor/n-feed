@@ -115,6 +115,29 @@ class ApiV1Tests(APITestCase):
         self.assertIn("media", response.data)
         self.assertFalse(Tweet.objects.filter(content="bad media").exists())
 
+    @override_settings(MAX_TWEET_MEDIA_UPLOAD_SIZE=10)
+    def test_api_rejects_oversized_tweet_media(self):
+        self.authenticate()
+        media = SimpleUploadedFile("tweet.gif", TINY_GIF, content_type="image/gif")
+
+        response = self.client.post(
+            "/api/v1/tweets/",
+            {"content": "oversized media", "media": media},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("media", response.data)
+        self.assertFalse(Tweet.objects.filter(content="oversized media").exists())
+
+    def test_unknown_tweet_slug_returns_404(self):
+        detail_response = self.client.get("/api/v1/tweets/missing-slug/")
+        self.authenticate()
+        like_response = self.client.post("/api/v1/tweets/missing-slug/like/")
+
+        self.assertEqual(detail_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(like_response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_owner_can_patch_tweet(self):
         self.authenticate()
 
@@ -154,13 +177,23 @@ class ApiV1Tests(APITestCase):
 
         like_response = self.client.post(f"/api/v1/tweets/{self.tweet.slug}/like/")
         bookmark_response = self.client.post(f"/api/v1/tweets/{self.tweet.slug}/bookmark/")
+        unlike_response = self.client.post(f"/api/v1/tweets/{self.tweet.slug}/like/")
+        unbookmark_response = self.client.post(f"/api/v1/tweets/{self.tweet.slug}/bookmark/")
 
         self.assertEqual(like_response.status_code, status.HTTP_200_OK)
         self.assertEqual(bookmark_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(unlike_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(unbookmark_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(like_response.data["status"], "liked")
+        self.assertEqual(bookmark_response.data["status"], "bookmarked")
+        self.assertEqual(unlike_response.data["status"], "unliked")
+        self.assertEqual(unbookmark_response.data["status"], "unbookmarked")
         self.assertTrue(like_response.data["liked"])
         self.assertTrue(bookmark_response.data["bookmarked"])
-        self.assertIn(self.other, self.tweet.likes.all())
-        self.assertIn(self.other, self.tweet.bookmarks.all())
+        self.assertFalse(unlike_response.data["liked"])
+        self.assertFalse(unbookmark_response.data["bookmarked"])
+        self.assertNotIn(self.other, self.tweet.likes.all())
+        self.assertNotIn(self.other, self.tweet.bookmarks.all())
 
     def test_users_list_detail_and_follow(self):
         self.authenticate()
@@ -175,8 +208,18 @@ class ApiV1Tests(APITestCase):
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
         self.assertNotIn("email", detail_response.data)
         self.assertEqual(follow_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(follow_response.data["status"], "following")
         self.assertTrue(follow_response.data["following"])
         self.assertIn(self.other, self.user.following.all())
+
+    def test_follow_self_is_noop(self):
+        self.authenticate()
+
+        response = self.client.post("/api/v1/users/author/follow/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"status": "noop", "following": False})
+        self.assertNotIn(self.user, self.user.following.all())
 
     def test_me_endpoint_requires_authentication(self):
         response = self.client.get("/api/v1/users/me/")
@@ -218,6 +261,20 @@ class ApiV1Tests(APITestCase):
     def test_me_endpoint_rejects_invalid_avatar(self):
         self.authenticate()
         avatar = SimpleUploadedFile("avatar.txt", b"not an image", content_type="text/plain")
+
+        response = self.client.patch(
+            "/api/v1/users/me/",
+            {"avatar": avatar},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("avatar", response.data)
+
+    @override_settings(MAX_AVATAR_UPLOAD_SIZE=10)
+    def test_me_endpoint_rejects_oversized_avatar(self):
+        self.authenticate()
+        avatar = SimpleUploadedFile("avatar.gif", TINY_GIF, content_type="image/gif")
 
         response = self.client.patch(
             "/api/v1/users/me/",
