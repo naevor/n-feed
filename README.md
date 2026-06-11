@@ -80,6 +80,8 @@ Useful endpoints:
 Docker Compose starts the web process, a Celery worker, and Celery beat. The web container runs migrations and creates the default periodic task that removes old notifications.
 
 Uploads are intentionally limited: avatars accept GIF/JPEG/PNG/WebP up to 2 MB, and tweet media accepts the same image types up to 5 MB. Override `MAX_AVATAR_UPLOAD_SIZE` and `MAX_TWEET_MEDIA_UPLOAD_SIZE` through the environment if production limits need to differ.
+Replaced avatars and deleted tweet media are removed from storage automatically. To inspect or delete orphaned files under managed media folders, run `python manage.py cleanup_orphan_media` or `python manage.py cleanup_orphan_media --delete`.
+Responses include an `X-Request-ID` header. Pass your own `X-Request-ID` from an API client to correlate request logs; otherwise the app generates one.
 
 For local development without Redis, Celery tasks run eagerly by default through `CELERY_TASK_ALWAYS_EAGER=True`.
 If you want to test the real queue locally, run Redis and set:
