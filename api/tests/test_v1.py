@@ -76,6 +76,22 @@ class ApiV1Tests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertFalse(Tweet.objects.filter(content="blocked").exists())
 
+    def test_anonymous_cannot_mutate_tweet(self):
+        patch_response = self.client.patch(
+            f"/api/v1/tweets/{self.tweet.slug}/",
+            {"content": "blocked"},
+        )
+        delete_response = self.client.delete(f"/api/v1/tweets/{self.tweet.slug}/")
+        like_response = self.client.post(f"/api/v1/tweets/{self.tweet.slug}/like/")
+        bookmark_response = self.client.post(f"/api/v1/tweets/{self.tweet.slug}/bookmark/")
+
+        self.assertEqual(patch_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(delete_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(like_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(bookmark_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.tweet.refresh_from_db()
+        self.assertEqual(self.tweet.content, "hello api searchable")
+
     def test_authenticated_user_can_create_tweet(self):
         self.authenticate()
 

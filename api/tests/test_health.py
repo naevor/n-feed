@@ -11,6 +11,11 @@ class HealthcheckTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
+    def test_request_id_header_is_echoed(self):
+        response = self.client.get(reverse("healthz"), HTTP_X_REQUEST_ID="test-request-id")
+
+        self.assertEqual(response["X-Request-ID"], "test-request-id")
+
     def test_readyz_checks_dependencies(self):
         response = self.client.get(reverse("readyz"))
 
