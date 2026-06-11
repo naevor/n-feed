@@ -1,9 +1,18 @@
-from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import serializers, status, viewsets
+from drf_spectacular.utils import extend_schema
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
+from api.v1.schema import (
+    ForbiddenResponse,
+    NotFoundResponse,
+    TweetActionResponseSerializer,
+    TweetCreateExample,
+    TweetCreateResponseExample,
+    UnauthorizedResponse,
+    ValidationErrorResponse,
+)
 from tweets import services
 from tweets.permissions import IsOwnerOrReadOnly
 from tweets.selectors import feed_qs
@@ -26,8 +35,10 @@ class TweetViewSet(viewsets.ModelViewSet):
         return TweetSerializer
 
     def get_permissions(self):
+        if self.action in ("create", "like", "bookmark"):
+            return [IsAuthenticated()]
         if self.action in ("update", "partial_update", "destroy"):
-            return [IsAuthenticatedOrReadOnly(), IsOwnerOrReadOnly()]
+            return [IsAuthenticated(), IsOwnerOrReadOnly()]
         return super().get_permissions()
 
     def get_throttles(self):
@@ -39,14 +50,31 @@ class TweetViewSet(viewsets.ModelViewSet):
         tweet = feed_qs(user=self.request.user).get(pk=tweet.pk)
         return TweetSerializer(tweet, context=self.get_serializer_context())
 
-    @extend_schema(request=TweetCreateSerializer, responses={201: TweetSerializer})
+    @extend_schema(
+        request=TweetCreateSerializer,
+        responses={
+            201: TweetSerializer,
+            400: ValidationErrorResponse,
+            401: UnauthorizedResponse,
+        },
+        examples=[TweetCreateExample, TweetCreateResponseExample],
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tweet = services.create_tweet(user=request.user, **serializer.validated_data)
         return Response(self._serialize_tweet(tweet).data, status=status.HTTP_201_CREATED)
 
-    @extend_schema(request=TweetCreateSerializer, responses=TweetSerializer)
+    @extend_schema(
+        request=TweetCreateSerializer,
+        responses={
+            200: TweetSerializer,
+            400: ValidationErrorResponse,
+            401: UnauthorizedResponse,
+            403: ForbiddenResponse,
+            404: NotFoundResponse,
+        },
+    )
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         tweet = self.get_object()
@@ -59,36 +87,60 @@ class TweetViewSet(viewsets.ModelViewSet):
         )
         return Response(self._serialize_tweet(tweet).data)
 
-    @extend_schema(request=TweetCreateSerializer, responses=TweetSerializer)
+    @extend_schema(
+        request=TweetCreateSerializer,
+        responses={
+            200: TweetSerializer,
+            400: ValidationErrorResponse,
+            401: UnauthorizedResponse,
+            403: ForbiddenResponse,
+            404: NotFoundResponse,
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
 
+    @extend_schema(
+        responses={
+            204: None,
+            401: UnauthorizedResponse,
+            403: ForbiddenResponse,
+            404: NotFoundResponse,
+        }
+    )
     def destroy(self, request, *args, **kwargs):
         tweet = self.get_object()
         services.delete_tweet_by_user(user=request.user, tweet=tweet)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
-        responses=inline_serializer(
-            name="TweetLikeResponse",
-            fields={"liked": serializers.BooleanField()},
-        )
+        responses={
+            200: TweetActionResponseSerializer,
+            401: UnauthorizedResponse,
+            404: NotFoundResponse,
+        }
     )
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def like(self, request, slug=None):
         tweet = self.get_object()
         liked = services.toggle_like(user=request.user, tweet=tweet)
-        return Response({"liked": liked})
+        return Response({"status": "liked" if liked else "unliked", "liked": liked})
 
     @extend_schema(
-        responses=inline_serializer(
-            name="TweetBookmarkResponse",
-            fields={"bookmarked": serializers.BooleanField()},
-        )
+        responses={
+            200: TweetActionResponseSerializer,
+            401: UnauthorizedResponse,
+            404: NotFoundResponse,
+        }
     )
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def bookmark(self, request, slug=None):
         tweet = self.get_object()
         bookmarked = services.toggle_bookmark(user=request.user, tweet=tweet)
-        return Response({"bookmarked": bookmarked})
+        return Response(
+            {
+                "status": "bookmarked" if bookmarked else "unbookmarked",
+                "bookmarked": bookmarked,
+            }
+        )
