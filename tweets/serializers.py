@@ -31,6 +31,8 @@ class TweetSerializer(serializers.ModelSerializer):
             "user",
             "content",
             "media",
+            "media_thumbnail",
+            "media_status",
             "created_at",
             "likes_count",
             "comments_count",

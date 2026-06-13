@@ -14,8 +14,8 @@
 <article class="tweet-card tweet-detail-card" data-tweet-id="{{ tweet.id }}">
     <div class="tweet-header">
         <a href="{% url 'users:profile' tweet.user.username %}" class="tweet-author">
-            {% if tweet.user.avatar %}
-                <img src="{{ tweet.user.avatar.url }}" alt="Avatar" class="avatar">
+            {% if tweet.user.avatar_display %}
+                <img src="{{ tweet.user.avatar_display.url }}" alt="Avatar" class="avatar">
             {% else %}
                 <img src="{% static 'img/default-avatar.png' %}" alt="Avatar" class="avatar">
             {% endif %}
@@ -26,8 +26,8 @@
 
     <p class="tweet-content">{{ tweet.content|format_tweet }}</p>
 
-    {% if tweet.media %}
-        <img src="{{ tweet.media.url }}" alt="Tweet Media" class="tweet-media">
+    {% if tweet.media_display %}
+        <img src="{{ tweet.media_display.url }}" alt="Tweet Media" class="tweet-media">
     {% endif %}
 
     <div class="tweet-actions">

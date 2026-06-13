@@ -24,13 +24,13 @@ def tweet_payload(tweet):
         "id": tweet.id,
         "slug": tweet.slug,
         "content": tweet.content,
-        "media_url": tweet.media.url if tweet.media else "",
+        "media_url": tweet.media_display.url if tweet.media_display else "",
         "created_at": date_format(created_at, "DATETIME_FORMAT"),
         "tweet_url": reverse("tweets:tweet_detail", args=[tweet.slug]),
         "user": {
             "id": tweet.user_id,
             "username": tweet.user.username,
-            "avatar_url": tweet.user.avatar.url if tweet.user.avatar else "",
+            "avatar_url": tweet.user.avatar_display.url if tweet.user.avatar_display else "",
             "profile_url": reverse("users:profile", args=[tweet.user.username]),
         },
     }

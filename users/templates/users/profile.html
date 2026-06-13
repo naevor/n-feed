@@ -14,8 +14,8 @@
     </div>
     <div class="profile-details">
         <div class="profile-avatar-section">
-            {% if profile_user.avatar %}
-                <img src="{{ profile_user.avatar.url }}" alt="Avatar" class="profile-avatar">
+            {% if profile_user.avatar_display %}
+                <img src="{{ profile_user.avatar_display.url }}" alt="Avatar" class="profile-avatar">
             {% else %}
                 <img src="{% static 'img/default-avatar.png' %}" alt="Avatar" class="profile-avatar">
             {% endif %}
@@ -77,8 +77,8 @@
                         {{ tweet.content|format_tweet }}
                     </p>
                     <p class="tweet-date">{{ tweet.created_at }}</p>
-                    {% if tweet.media %}
-                        <img src="{{ tweet.media.url }}" alt="Tweet Media" class="tweet-media">
+                    {% if tweet.media_display %}
+                        <img src="{{ tweet.media_display.url }}" alt="Tweet Media" class="tweet-media">
                     {% endif %}
 
                     {% if tweet.user == request.user %}

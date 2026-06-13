@@ -9,7 +9,7 @@ from .models import CustomUser
 class UserMinSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ["id", "username", "avatar"]
+        fields = ["id", "username", "avatar", "avatar_thumbnail", "avatar_status"]
         read_only_fields = fields
 
 
@@ -24,6 +24,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "username",
             "bio",
             "avatar",
+            "avatar_thumbnail",
+            "avatar_status",
             "followers_count",
             "following_count",
         ]
@@ -38,6 +40,8 @@ class UserPrivateSerializer(UserDetailSerializer):
             "email",
             "bio",
             "avatar",
+            "avatar_thumbnail",
+            "avatar_status",
             "followers_count",
             "following_count",
         ]
