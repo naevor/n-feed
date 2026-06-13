@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TransactionTestCase, override_settings
 
+from twitmain.media_status import MediaProcessingStatus
+
 User = get_user_model()
 TINY_GIF = (
     b"GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00\xff\xff\xff,"
@@ -42,13 +44,19 @@ class AvatarLifecycleTests(TransactionTestCase):
             password="testpass123",
             avatar=uploaded_gif("old.gif"),
         )
+        user.refresh_from_db()
         old_name = user.avatar.name
+        old_thumbnail_name = user.avatar_thumbnail.name
 
         user.avatar = uploaded_gif("new.gif")
         user.save(update_fields=["avatar"])
+        user.refresh_from_db()
 
         self.assertFalse(media_path(old_name).exists())
+        self.assertFalse(media_path(old_thumbnail_name).exists())
         self.assertTrue(media_path(user.avatar.name).exists())
+        self.assertTrue(media_path(user.avatar_thumbnail.name).exists())
+        self.assertEqual(user.avatar_status, MediaProcessingStatus.READY)
 
     def test_avatar_is_deleted_when_user_is_deleted(self):
         user = User.objects.create_user(
@@ -56,9 +64,14 @@ class AvatarLifecycleTests(TransactionTestCase):
             password="testpass123",
             avatar=uploaded_gif("avatar.gif"),
         )
+        user.refresh_from_db()
         avatar_name = user.avatar.name
+        thumbnail_name = user.avatar_thumbnail.name
         self.assertTrue(media_path(avatar_name).exists())
+        self.assertTrue(media_path(thumbnail_name).exists())
+        self.assertEqual(user.avatar_status, MediaProcessingStatus.READY)
 
         user.delete()
 
         self.assertFalse(media_path(avatar_name).exists())
+        self.assertFalse(media_path(thumbnail_name).exists())

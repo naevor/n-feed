@@ -10,6 +10,7 @@ from django.core.management import call_command
 from django.test import TestCase, TransactionTestCase, override_settings
 
 from tweets.models import Tweet
+from twitmain.media_status import MediaProcessingStatus
 
 User = get_user_model()
 TINY_GIF = (
@@ -51,12 +52,17 @@ class TweetMediaLifecycleTests(MediaRootMixin, TransactionTestCase):
             content="with media",
             media=uploaded_gif("tweet.gif"),
         )
+        tweet.refresh_from_db()
         media_name = tweet.media.name
+        thumbnail_name = tweet.media_thumbnail.name
         self.assertTrue(media_path(media_name).exists())
+        self.assertTrue(media_path(thumbnail_name).exists())
+        self.assertEqual(tweet.media_status, MediaProcessingStatus.READY)
 
         tweet.delete()
 
         self.assertFalse(media_path(media_name).exists())
+        self.assertFalse(media_path(thumbnail_name).exists())
 
     def test_replaced_tweet_media_is_deleted(self):
         tweet = Tweet.objects.create(
@@ -64,13 +70,19 @@ class TweetMediaLifecycleTests(MediaRootMixin, TransactionTestCase):
             content="with media",
             media=uploaded_gif("old.gif"),
         )
+        tweet.refresh_from_db()
         old_name = tweet.media.name
+        old_thumbnail_name = tweet.media_thumbnail.name
 
         tweet.media = uploaded_gif("new.gif")
         tweet.save(update_fields=["media"])
+        tweet.refresh_from_db()
 
         self.assertFalse(media_path(old_name).exists())
+        self.assertFalse(media_path(old_thumbnail_name).exists())
         self.assertTrue(media_path(tweet.media.name).exists())
+        self.assertTrue(media_path(tweet.media_thumbnail.name).exists())
+        self.assertEqual(tweet.media_status, MediaProcessingStatus.READY)
 
 
 class CleanupOrphanMediaCommandTests(MediaRootMixin, TestCase):
