@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 try:
@@ -86,6 +88,33 @@ def build_channel_layer_config(*, default_redis_url=""):
     }
 
 
+def build_default_storage_config(*, default_use_s3=False):
+    if not env_bool("USE_S3_STORAGE", default_use_s3):
+        return {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        }
+
+    bucket_name = os.environ.get("AWS_STORAGE_BUCKET_NAME", "").strip()
+    if not bucket_name:
+        raise ImproperlyConfigured("AWS_STORAGE_BUCKET_NAME is required when USE_S3_STORAGE=True.")
+
+    return {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": os.environ.get("AWS_ACCESS_KEY_ID", ""),
+            "secret_key": os.environ.get("AWS_SECRET_ACCESS_KEY", ""),
+            "bucket_name": bucket_name,
+            "endpoint_url": os.environ.get("AWS_S3_ENDPOINT_URL") or None,
+            "region_name": os.environ.get("AWS_S3_REGION_NAME") or None,
+            "custom_domain": os.environ.get("AWS_S3_CUSTOM_DOMAIN") or None,
+            "addressing_style": os.environ.get("AWS_S3_ADDRESSING_STYLE", "path"),
+            "default_acl": None,
+            "file_overwrite": False,
+            "querystring_auth": env_bool("AWS_QUERYSTRING_AUTH", False),
+        },
+    }
+
+
 INSTALLED_APPS = [
     "daphne",
     "django.contrib.admin",
@@ -101,6 +130,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "drf_spectacular",
+    "storages",
     "api",
     "tags",
     "notifications",
@@ -185,6 +215,14 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = int(
     os.environ.get("FILE_UPLOAD_MAX_MEMORY_SIZE", MAX_TWEET_MEDIA_UPLOAD_SIZE)
 )
 FILE_UPLOAD_PERMISSIONS = 0o644
+MEDIA_THUMBNAIL_MAX_SIZE = int(os.environ.get("MEDIA_THUMBNAIL_MAX_SIZE", "512"))
+
+STORAGES = {
+    "default": build_default_storage_config(default_use_s3=False),
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"

@@ -23,6 +23,29 @@ services:
       timeout: 3s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 2; done;
+      mc mb -p local/${AWS_STORAGE_BUCKET_NAME:-n-feed-media} || true;
+      mc anonymous set download local/${AWS_STORAGE_BUCKET_NAME:-n-feed-media} || true;
+      "
+
   web:
     build: .
     depends_on:
@@ -48,6 +71,16 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       CELERY_TASK_ALWAYS_EAGER: "False"
+      USE_S3_STORAGE: ${USE_S3_STORAGE:-False}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-n-feed-media}
+      AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-http://minio:9000}
+      AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME:-us-east-1}
+      AWS_S3_CUSTOM_DOMAIN: ${AWS_S3_CUSTOM_DOMAIN:-}
+      AWS_S3_ADDRESSING_STYLE: ${AWS_S3_ADDRESSING_STYLE:-path}
+      AWS_QUERYSTRING_AUTH: ${AWS_QUERYSTRING_AUTH:-False}
+      MEDIA_THUMBNAIL_MAX_SIZE: ${MEDIA_THUMBNAIL_MAX_SIZE:-512}
     volumes:
       - media:/app/media
     command: >
@@ -85,6 +118,16 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       CELERY_TASK_ALWAYS_EAGER: "False"
+      USE_S3_STORAGE: ${USE_S3_STORAGE:-False}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-n-feed-media}
+      AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-http://minio:9000}
+      AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME:-us-east-1}
+      AWS_S3_CUSTOM_DOMAIN: ${AWS_S3_CUSTOM_DOMAIN:-}
+      AWS_S3_ADDRESSING_STYLE: ${AWS_S3_ADDRESSING_STYLE:-path}
+      AWS_QUERYSTRING_AUTH: ${AWS_QUERYSTRING_AUTH:-False}
+      MEDIA_THUMBNAIL_MAX_SIZE: ${MEDIA_THUMBNAIL_MAX_SIZE:-512}
     volumes:
       - media:/app/media
     command: celery -A twitmain worker -l info
@@ -119,6 +162,16 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       CELERY_TASK_ALWAYS_EAGER: "False"
+      USE_S3_STORAGE: ${USE_S3_STORAGE:-False}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-n-feed-media}
+      AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-http://minio:9000}
+      AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME:-us-east-1}
+      AWS_S3_CUSTOM_DOMAIN: ${AWS_S3_CUSTOM_DOMAIN:-}
+      AWS_S3_ADDRESSING_STYLE: ${AWS_S3_ADDRESSING_STYLE:-path}
+      AWS_QUERYSTRING_AUTH: ${AWS_QUERYSTRING_AUTH:-False}
+      MEDIA_THUMBNAIL_MAX_SIZE: ${MEDIA_THUMBNAIL_MAX_SIZE:-512}
     volumes:
       - media:/app/media
     command: celery -A twitmain beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
@@ -147,4 +200,5 @@ services:
 volumes:
   pg_data:
   redis_data:
+  minio_data:
   media:

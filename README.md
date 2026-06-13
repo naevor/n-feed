@@ -14,8 +14,9 @@ n-feed is a Django Twitter-style backend project with server-rendered pages, a v
 - drf-spectacular OpenAPI docs
 - PostgreSQL or SQLite
 - Redis cache
+- django-storages with optional S3-compatible media storage
 - pytest, ruff, pre-commit
-- Docker Compose with PostgreSQL, Redis, Daphne, Celery, Nginx
+- Docker Compose with PostgreSQL, Redis, MinIO, Daphne, Celery, Nginx
 
 ## Architecture
 
@@ -25,7 +26,7 @@ flowchart LR
     Nginx --> Web[Daphne + Django ASGI]
     Web --> Postgres[(PostgreSQL)]
     Web --> Redis[(Redis cache / channels / broker)]
-    Web --> Media[(media volume)]
+    Web --> Media[(media volume or S3 bucket)]
     Web --> OpenAPI[OpenAPI schema]
     Celery[Celery worker] --> Redis
     Celery --> Postgres
@@ -125,8 +126,11 @@ socket.onmessage = (event) => console.log(JSON.parse(event.data));
 Docker Compose starts the web process, a Celery worker, and Celery beat. The web container runs migrations and creates the default periodic task that removes old notifications.
 
 Uploads are intentionally limited: avatars accept GIF/JPEG/PNG/WebP up to 2 MB, and tweet media accepts the same image types up to 5 MB. Override `MAX_AVATAR_UPLOAD_SIZE` and `MAX_TWEET_MEDIA_UPLOAD_SIZE` through the environment if production limits need to differ.
-Replaced avatars and deleted tweet media are removed from storage automatically. To inspect or delete orphaned files under managed media folders, run `python manage.py cleanup_orphan_media` or `python manage.py cleanup_orphan_media --delete`.
+Avatar and tweet uploads generate WebP thumbnails asynchronously through Celery. Local development runs that task eagerly by default, while Docker/prod sends it through Redis to the worker. API responses expose both original media and thumbnail URLs plus processing status.
+Replaced avatars, deleted tweet media, and their thumbnails are removed from storage automatically. To inspect or delete orphaned files under managed media folders, run `python manage.py cleanup_orphan_media` or `python manage.py cleanup_orphan_media --delete`.
 Responses include an `X-Request-ID` header. Pass your own `X-Request-ID` from an API client to correlate request logs; otherwise the app generates one.
+
+Docker Compose also starts MinIO on `http://127.0.0.1:9001/` for S3-compatible testing. Files still use the local media volume unless `USE_S3_STORAGE=True` is set. For MinIO, use the `AWS_*` variables from `.env.example`; for a real provider, set the same variables with the provider endpoint or leave `AWS_S3_ENDPOINT_URL` empty for AWS S3.
 
 For local development without Redis, Celery tasks run eagerly by default through `CELERY_TASK_ALWAYS_EAGER=True`.
 If you want to test the real queue locally, run Redis and set:
