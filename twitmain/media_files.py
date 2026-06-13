@@ -57,7 +57,21 @@ def collect_referenced_media_names():
     )
     names.update(
         name
+        for name in user_model.objects.exclude(avatar_thumbnail="").values_list(
+            "avatar_thumbnail", flat=True
+        )
+        if name
+    )
+    names.update(
+        name
         for name in Tweet.objects.exclude(media="").values_list("media", flat=True)
+        if name
+    )
+    names.update(
+        name
+        for name in Tweet.objects.exclude(media_thumbnail="").values_list(
+            "media_thumbnail", flat=True
+        )
         if name
     )
     return names

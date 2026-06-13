@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Index
 from django.utils.text import slugify
 
+from twitmain.media_status import MediaProcessingStatus
 from twitmain.uploads import validate_tweet_media_upload
 
 
@@ -15,6 +16,18 @@ class Tweet(models.Model):
     )
     content = models.TextField(max_length=280)
     media = models.FileField(upload_to="tweet_media/", blank=True, null=True)
+    media_thumbnail = models.ImageField(
+        upload_to="tweet_media/thumbnails/",
+        blank=True,
+        null=True,
+        editable=False,
+    )
+    media_status = models.CharField(
+        max_length=20,
+        choices=MediaProcessingStatus.choices,
+        default=MediaProcessingStatus.NONE,
+        editable=False,
+    )
     likes = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="liked_tweets", blank=True
     )
@@ -62,6 +75,10 @@ class Tweet(models.Model):
                 validate_tweet_media_upload(self.media)
             except ValidationError as exc:
                 raise ValidationError({"media": exc.messages}) from exc
+
+    @property
+    def media_display(self):
+        return self.media_thumbnail or self.media
 
 
 class Comment(models.Model):
