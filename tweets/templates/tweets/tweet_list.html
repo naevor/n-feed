@@ -3,24 +3,26 @@
 {% load tweet_formatting %}
 {% block content %}
 
-<header class="page-header">
+<header class="page-header page-header-row">
     <div>
         <p class="eyebrow">Live feed</p>
         <h1>Latest tweets</h1>
     </div>
-</header>
 
-<div class="search-bar">
     <form method="get" action="{% url 'tweets:all_tweets' %}" class="search-form">
         <input type="text" name="q" value="{{ query }}" placeholder="Search tweets" class="search-input">
         <button type="submit" class="search-btn">Search</button>
     </form>
-</div>
+</header>
 
 <div class="tweet-form">
     {% if user.is_authenticated %}
-        <form method="post" enctype="multipart/form-data" class="form-panel">
+        <form method="post" enctype="multipart/form-data" class="form-panel composer-panel">
             {% csrf_token %}
+            <div class="composer-heading">
+                <strong>New tweet</strong>
+                <span>Draft</span>
+            </div>
             {{ form.as_p }}
             <button type="submit" class="btn tweet-btn">Tweet</button>
         </form>

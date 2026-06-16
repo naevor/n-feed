@@ -14,6 +14,7 @@ class TweetForm(forms.ModelForm):
             "content": forms.Textarea(
                 attrs={"placeholder": "What's new?", "rows": 3, "class": "form-control"}
             ),
+            "media": forms.ClearableFileInput(attrs={"class": "file-input"}),
         }
 
     def clean_content(self):
@@ -38,7 +39,7 @@ class CommentForm(forms.ModelForm):
         fields = ["content"]
         widgets = {
             "content": forms.Textarea(
-                attrs={"placeholder": "wright a comment...", "rows": 2, "class": "form-control"}
+                attrs={"placeholder": "Write a comment...", "rows": 2, "class": "form-control"}
             ),
         }
 
