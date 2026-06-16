@@ -16,8 +16,16 @@ class RegisterForm(UserCreationForm):
 
 
 class EditProfileForm(forms.ModelForm):
-    bio = forms.CharField(widget=forms.Textarea, required=False, label="About myself")
-    avatar = forms.ImageField(required=False, label="Avatar")
+    bio = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
+        required=False,
+        label="About myself",
+    )
+    avatar = forms.ImageField(
+        required=False,
+        label="Avatar",
+        widget=forms.ClearableFileInput(attrs={"class": "file-input"}),
+    )
     email = forms.EmailField(required=True, label="Just Email")
 
     class Meta:

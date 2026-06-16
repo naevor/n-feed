@@ -5,11 +5,12 @@
 {% block title %}Profile of {{ profile_user.username }}{% endblock %}
 
 {% block content %}
-<div class="profile-container profile-hero" data-profile-user-id="{{ profile_user.id }}">
+<div class="profile-page" data-profile-user-id="{{ profile_user.id }}">
+<section class="profile-container profile-hero">
     <div class="profile-heading">
         <div>
             <p class="eyebrow">Profile</p>
-            <h1>{{ profile_user.username }}</h1>
+            <h1>Profile of {{ profile_user.username }}</h1>
         </div>
     </div>
     <div class="profile-details">
@@ -67,6 +68,7 @@
         <a href="{% url 'users:login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-secondary">Log in to follow</a>
     </div>
     {% endif %}
+</section>
 
     <h2 class="section-title">Tweets by {{ profile_user.username }}</h2>
     {% if tweets %}
