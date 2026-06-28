@@ -236,6 +236,20 @@ img {
     font-size: 20px;
 }
 
+.panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.panel-heading h1 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.12;
+}
+
 .search-bar {
     display: flex;
     justify-content: center;
@@ -350,6 +364,30 @@ select:focus {
     color: var(--muted);
 }
 
+.helptext {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.errorlist {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 12px;
+    padding: 0;
+    color: var(--danger);
+    font-size: 13px;
+    list-style: none;
+}
+
+.errorlist li {
+    padding: 8px 10px;
+    background: rgba(244, 63, 94, 0.08);
+    border: 1px solid rgba(244, 63, 94, 0.28);
+    border-radius: 8px;
+}
+
 .auth-card {
     max-width: 460px;
     padding: 24px;
@@ -460,8 +498,17 @@ select:focus {
 }
 
 .tweet-detail-card {
-    margin-left: 0;
-    margin-right: 0;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.tweet-detail-card .tweet-content {
+    font-size: 18px;
+}
+
+.comments-section {
+    max-width: 680px;
+    margin: 0 auto;
 }
 
 .tweet-header {
@@ -550,6 +597,10 @@ select:focus {
 
 .comment-header strong {
     color: var(--text);
+}
+
+.comment-card p {
+    margin-bottom: 0;
 }
 
 .empty-state {
@@ -892,20 +943,46 @@ button:disabled {
     margin-bottom: 20px;
 }
 
-.btn-flwr {
-    display: inline-block;
+.user-list-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     width: 100%;
-    padding: 10px 15px;
+    padding: 12px 14px;
     background-color: var(--panel-raised);
     color: var(--text);
     border: 1px solid var(--border);
     text-decoration: none;
     border-radius: 8px;
-    transition: background-color 0.2s;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
 }
 
-.btn-flwr:hover {
-    background-color: var(--accent-hover);
+.user-list-link:hover {
+    background-color: var(--panel-hover);
+    border-color: var(--accent);
+}
+
+.user-list-link span {
+    overflow: hidden;
+    color: var(--link);
+    font-weight: 800;
+    text-overflow: ellipsis;
+}
+
+.user-list-link small {
+    flex: 0 0 auto;
+    color: var(--muted);
+}
+
+.empty-row {
+    padding: 14px;
+    background: var(--panel-raised);
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    color: var(--muted);
 }
 
 @media (max-width: 1100px) {
@@ -989,13 +1066,19 @@ button:disabled {
 
     .search-bar form,
     .profile-details,
-    .page-header-row {
+    .page-header-row,
+    .panel-heading {
         flex-direction: column;
     }
 
     .page-header h1,
-    .profile-heading h1 {
+    .profile-heading h1,
+    .panel-heading h1 {
         font-size: 30px;
+    }
+
+    .panel-heading .btn {
+        width: 100%;
     }
 
     .page-header-row .search-form {
