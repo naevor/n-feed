@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logout</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Logged out{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+    <p class="eyebrow">Session ended</p>
     <h1>You are logged out</h1>
-    <p><a href="{% url 'users:login' %}">Login again</a></p>
-</body>
-</html>
+    <p class="muted">Your session has been closed.</p>
+    <a href="{% url 'users:login' %}" class="btn">Login again</a>
+</section>
+{% endblock %}

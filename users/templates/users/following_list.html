@@ -4,17 +4,25 @@
 
 {% block content %}
 <section class="list-panel">
-<p class="eyebrow">Network</p>
-<h1>Following list of {{ profile_user.username }}</h1>
-<ul class="following-list user-list">
-    {% for follow in following %}
-        <li>
-            <a href="{% url 'users:profile' follow.username %}" class="btn-flwr">{{ follow.username }}</a>
-        </li>
-    {% empty %}
-        <li class="muted">Not following anyone yet.</li>
-    {% endfor %}
-</ul>
-<a href="{% url 'users:profile' profile_user.username %}" class="btn btn-secondary">Back to profile</a>
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Network</p>
+            <h1>Following {{ profile_user.username }}</h1>
+        </div>
+        <a href="{% url 'users:profile' profile_user.username %}" class="btn btn-secondary">Back</a>
+    </div>
+
+    <ul class="following-list user-list">
+        {% for follow in following %}
+            <li>
+                <a href="{% url 'users:profile' follow.username %}" class="user-list-link">
+                    <span>{{ follow.username }}</span>
+                    <small>Open profile</small>
+                </a>
+            </li>
+        {% empty %}
+            <li class="empty-row">Not following anyone yet.</li>
+        {% endfor %}
+    </ul>
 </section>
 {% endblock %}

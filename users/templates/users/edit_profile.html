@@ -6,15 +6,17 @@
 <header class="page-header">
     <div>
         <p class="eyebrow">Account</p>
-        <h1>Editing profile</h1>
+        <h1>Edit profile</h1>
     </div>
 </header>
-<div class="form-container form-panel">
+<section class="form-container form-panel">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn">Save</button>
+        <div class="form-actions">
+            <button type="submit" class="btn">Save changes</button>
+            <a href="{% url 'users:profile' request.user.username %}" class="btn btn-secondary">Cancel</a>
+        </div>
     </form>
-    <a href="{% url 'users:profile' request.user.username %}" class="btn btn-secondary">Back to profile</a>
-</div>
+</section>
 {% endblock %}
