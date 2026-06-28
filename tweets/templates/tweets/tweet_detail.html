@@ -73,6 +73,7 @@
     </div>
 </article>
 
+<section class="comments-section">
 <h2 class="section-title">Comments</h2>
 <ul class="comment-list" data-comment-list data-tweet-id="{{ tweet.id }}">
     {% for comment in comments %}
@@ -103,11 +104,12 @@
         <button type="submit" class="btn">Comment</button>
     </form>
 {% else %}
-    <p>
+    <p class="empty-state">
         <a href="{% url 'users:login' %}?next={{ request.get_full_path|urlencode }}">Log in</a>
         to add a comment.
     </p>
 {% endif %}
+</section>
 
 {% if user.is_authenticated %}
     <script src="{% static 'interactions.js' %}" defer></script>
