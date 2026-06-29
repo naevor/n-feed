@@ -70,9 +70,11 @@ Useful endpoints:
 - `GET /healthz/`
 - `GET /readyz/`
 - `GET /celeryz/`
+- `GET /api/v1/status/`
 - `GET /api/docs/`
 - `GET /api/redoc/`
 - `GET /api/v1/tweets/`
+- `GET /api/v1/tweets/{slug}/media-status/`
 - `GET/PATCH /api/v1/users/me/`
 - `GET /api/v1/tags/trending/`
 - `WS /ws/notifications/`
@@ -104,6 +106,7 @@ $tweet = Invoke-RestMethod `
   -Body (@{ content = "API smoke #django" } | ConvertTo-Json)
 Invoke-RestMethod -Method Post -Uri "$base/api/v1/tweets/$($tweet.slug)/like/" -Headers $headers
 Invoke-RestMethod -Method Post -Uri "$base/api/v1/tweets/$($tweet.slug)/bookmark/" -Headers $headers
+Invoke-RestMethod -Uri "$base/api/v1/tweets/$($tweet.slug)/media-status/"
 ```
 
 Upload media through multipart form data:
@@ -126,7 +129,7 @@ socket.onmessage = (event) => console.log(JSON.parse(event.data));
 Docker Compose starts the web process, a Celery worker, and Celery beat. The web container runs migrations and creates the default periodic task that removes old notifications.
 
 Uploads are intentionally limited: avatars accept GIF/JPEG/PNG/WebP up to 2 MB, and tweet media accepts the same image types up to 5 MB. Override `MAX_AVATAR_UPLOAD_SIZE` and `MAX_TWEET_MEDIA_UPLOAD_SIZE` through the environment if production limits need to differ.
-Avatar and tweet uploads generate WebP thumbnails asynchronously through Celery. Local development runs that task eagerly by default, while Docker/prod sends it through Redis to the worker. API responses expose both original media and thumbnail URLs plus processing status.
+Avatar and tweet uploads generate WebP thumbnails asynchronously through Celery. Local development runs that task eagerly by default, while Docker/prod sends it through Redis to the worker. API responses expose both original media and thumbnail URLs plus processing status. Server-rendered tweet cards show when a preview is still processing or when thumbnail generation failed, and `GET /api/v1/tweets/{slug}/media-status/` lets API clients poll just the media state without refetching the full tweet payload.
 Replaced avatars, deleted tweet media, and their thumbnails are removed from storage automatically. To inspect or delete orphaned files under managed media folders, run `python manage.py cleanup_orphan_media` or `python manage.py cleanup_orphan_media --delete`.
 Responses include an `X-Request-ID` header. Pass your own `X-Request-ID` from an API client to correlate request logs; otherwise the app generates one.
 
@@ -156,6 +159,7 @@ Required production steps:
 6. Point the load balancer health check at `/readyz/`.
 
 `/healthz/` only confirms that Django can return a response. `/readyz/` checks the database, cache, and Channels layer, so it is the endpoint to use before sending traffic to a web container. `/celeryz/` checks Celery worker visibility separately; it is intentionally not part of web readiness to avoid startup dependency cycles.
+`/api/v1/status/` is a lightweight public API metadata endpoint for clients and smoke tests. It returns the service name, API version, current environment, debug flag, and documentation/schema URLs.
 
 ## Checks
 
