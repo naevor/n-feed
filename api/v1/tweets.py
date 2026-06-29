@@ -16,7 +16,7 @@ from api.v1.schema import (
 from tweets import services
 from tweets.permissions import IsOwnerOrReadOnly
 from tweets.selectors import feed_qs
-from tweets.serializers import TweetCreateSerializer, TweetSerializer
+from tweets.serializers import TweetCreateSerializer, TweetMediaStatusSerializer, TweetSerializer
 
 
 class TweetViewSet(viewsets.ModelViewSet):
@@ -144,3 +144,15 @@ class TweetViewSet(viewsets.ModelViewSet):
                 "bookmarked": bookmarked,
             }
         )
+
+    @extend_schema(
+        responses={
+            200: TweetMediaStatusSerializer,
+            404: NotFoundResponse,
+        }
+    )
+    @action(detail=True, methods=["get"], url_path="media-status")
+    def media_status(self, request, slug=None):
+        tweet = self.get_object()
+        serializer = TweetMediaStatusSerializer(tweet, context=self.get_serializer_context())
+        return Response(serializer.data)

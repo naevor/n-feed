@@ -53,3 +53,10 @@ class TweetCreateSerializer(serializers.ModelSerializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.messages) from exc
         return media
+
+
+class TweetMediaStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tweet
+        fields = ["slug", "media", "media_thumbnail", "media_status"]
+        read_only_fields = fields

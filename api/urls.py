@@ -3,8 +3,10 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .v1.auth import ThrottledTokenObtainPairView
+from .v1.status import ApiStatusView
 
 urlpatterns = [
+    path("v1/status/", ApiStatusView.as_view(), name="api-status"),
     path("v1/auth/login/", ThrottledTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("v1/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("v1/", include("api.v1.routers")),

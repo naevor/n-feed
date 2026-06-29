@@ -41,6 +41,8 @@ TweetCreateResponseExample = OpenApiExample(
         "user": {"id": 1, "username": "author", "avatar": None},
         "content": "Shipping n-feed API #django",
         "media": None,
+        "media_thumbnail": None,
+        "media_status": "none",
         "created_at": "2026-06-12T10:00:00Z",
         "likes_count": 0,
         "comments_count": 0,
