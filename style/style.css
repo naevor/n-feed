@@ -567,6 +567,30 @@ select:focus {
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
 }
 
+.tweet-media-frame {
+    margin-top: 12px;
+}
+
+.tweet-media-frame .tweet-media {
+    margin-top: 0;
+}
+
+.media-status-note {
+    margin: 8px 0 0;
+    padding: 8px 10px;
+    background: rgba(125, 211, 252, 0.08);
+    border: 1px solid rgba(125, 211, 252, 0.22);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.media-status-note-error {
+    background: rgba(244, 63, 94, 0.08);
+    border-color: rgba(244, 63, 94, 0.28);
+    color: var(--danger);
+}
+
 .tweet-actions,
 .profile-actions,
 .profile-follow,

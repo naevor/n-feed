@@ -79,9 +79,7 @@
                         {{ tweet.content|format_tweet }}
                     </p>
                     <p class="tweet-date">{{ tweet.created_at }}</p>
-                    {% if tweet.media_display %}
-                        <img src="{{ tweet.media_display.url }}" alt="Tweet Media" class="tweet-media">
-                    {% endif %}
+                    {% include "tweets/_tweet_media.html" %}
 
                     {% if tweet.user == request.user %}
                         <div class="tweet-actions">

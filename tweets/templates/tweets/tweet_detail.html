@@ -26,9 +26,7 @@
 
     <p class="tweet-content">{{ tweet.content|format_tweet }}</p>
 
-    {% if tweet.media_display %}
-        <img src="{{ tweet.media_display.url }}" alt="Tweet Media" class="tweet-media">
-    {% endif %}
+    {% include "tweets/_tweet_media.html" %}
 
     <div class="tweet-actions">
         {% if user.is_authenticated %}

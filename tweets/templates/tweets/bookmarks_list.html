@@ -25,9 +25,7 @@
                         <span class="tweet-date">{{ tweet.created_at }}</span>
                     </div>
                     <p class="tweet-content">{{ tweet.content|format_tweet }}</p>
-                    {% if tweet.media_display %}
-                        <img src="{{ tweet.media_display.url }}" alt="Tweet Media" class="tweet-media">
-                    {% endif %}
+                    {% include "tweets/_tweet_media.html" %}
                     <div class="tweet-actions">
                         <a href="{% url 'tweets:tweet_detail' tweet.slug %}" class="btn">Open</a>
                     </div>

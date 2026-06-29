@@ -1,0 +1,10 @@
+{% if tweet.media %}
+    <div class="tweet-media-frame media-status-{{ tweet.media_status }}">
+        <img src="{{ tweet.media_display.url }}" alt="Tweet media" class="tweet-media">
+        {% if tweet.media_status == "pending" %}
+            <p class="media-status-note">Preview is processing. Showing the original upload for now.</p>
+        {% elif tweet.media_status == "failed" %}
+            <p class="media-status-note media-status-note-error">Preview generation failed. Original media is still available.</p>
+        {% endif %}
+    </div>
+{% endif %}
