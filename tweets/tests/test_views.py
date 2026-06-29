@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from tweets.models import Tweet
+from twitmain.media_status import MediaProcessingStatus
 
 User = get_user_model()
 
@@ -73,6 +74,26 @@ class TweetViewTests(TestCase):
         self.assertContains(response, "data-feed-container")
         self.assertContains(response, "data-feed-list")
         self.assertContains(response, "feed.js")
+
+    def test_feed_shows_media_processing_status(self):
+        Tweet.objects.filter(pk=self.tweet.pk).update(
+            media="tweet_media/original.gif",
+            media_status=MediaProcessingStatus.PENDING,
+        )
+
+        response = self.client.get(reverse("tweets:all_tweets"))
+
+        self.assertContains(response, "Preview is processing")
+
+    def test_feed_shows_media_processing_failure(self):
+        Tweet.objects.filter(pk=self.tweet.pk).update(
+            media="tweet_media/original.gif",
+            media_status=MediaProcessingStatus.FAILED,
+        )
+
+        response = self.client.get(reverse("tweets:all_tweets"))
+
+        self.assertContains(response, "Preview generation failed")
 
     def test_authenticated_feed_loads_async_interactions_client(self):
         self.client.login(username="author", password="testpass123")

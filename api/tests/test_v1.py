@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from tweets.models import Tweet
+from twitmain.media_status import MediaProcessingStatus
 
 User = get_user_model()
 TINY_GIF = (
@@ -63,12 +64,35 @@ class ApiV1Tests(APITestCase):
         self.assertEqual(docs.status_code, status.HTTP_200_OK)
         self.assertEqual(redoc.status_code, status.HTTP_200_OK)
 
+    def test_api_status_endpoint_returns_product_metadata(self):
+        response = self.client.get("/api/v1/status/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "ok")
+        self.assertEqual(response.data["service"], "n-feed")
+        self.assertEqual(response.data["api_version"], "v1")
+        self.assertIn("/api/docs/", response.data["docs_url"])
+        self.assertIn("/api/schema/", response.data["schema_url"])
+
     def test_anonymous_can_list_and_retrieve_tweets(self):
         list_response = self.client.get("/api/v1/tweets/")
         detail_response = self.client.get(f"/api/v1/tweets/{self.tweet.slug}/")
 
         self.assertEqual(list_response.status_code, status.HTTP_200_OK)
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+
+    def test_anonymous_can_read_tweet_media_status(self):
+        Tweet.objects.filter(pk=self.tweet.pk).update(
+            media="tweet_media/original.gif",
+            media_status=MediaProcessingStatus.PENDING,
+        )
+
+        response = self.client.get(f"/api/v1/tweets/{self.tweet.slug}/media-status/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["slug"], self.tweet.slug)
+        self.assertEqual(response.data["media_status"], MediaProcessingStatus.PENDING)
+        self.assertIn("tweet_media/original.gif", response.data["media"])
 
     def test_anonymous_cannot_create_tweet(self):
         response = self.client.post("/api/v1/tweets/", {"content": "blocked"})
